@@ -102,7 +102,7 @@ def test_dependency_identity_ignores_version() -> None:
 
 def test_semgrep_rule_ids_are_portable_across_install_paths() -> None:
     known = frozenset({"python.flask.security.audit.debug-enabled.debug-enabled"})
-    a = portable_rule_id("D.anvesh.EMIITH.project.rules.vendor.python.flask.security.audit.debug-enabled"
+    a = portable_rule_id("D.projects.spa.rules.vendor.python.flask.security.audit.debug-enabled"
                          ".debug-enabled", known)
     b = portable_rule_id("home.alice.spa.rules.vendor.python.flask.security.audit.debug-enabled"
                          ".debug-enabled", known)

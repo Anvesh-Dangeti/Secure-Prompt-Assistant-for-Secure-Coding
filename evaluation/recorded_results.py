@@ -1,0 +1,56 @@
+"""Headline results, recorded once, asserted by tests, rendered by the review deck.
+
+Every number presented to the panel comes from here. The integration tests
+re-run the real scanners and assert the outcome equals these values
+(tests/integration/test_scan_fixture.py, test_lifecycle_scenario.py), so a
+number on a slide cannot silently drift from what the code actually does.
+
+Values that depend on the network or on third-party repositories that can
+change (the live repository scan) are recorded with their date and are *not*
+asserted -- they are labelled as a snapshot wherever they are shown.
+
+Toolchain these were recorded with: Semgrep 1.180.0 (p/python snapshot,
+151 rules), Bandit 1.9.4, Gitleaks 8.30.1, pip-audit 2.10.1.
+"""
+
+from __future__ import annotations
+
+# ---- fixtures/flask_vuln_app, all four scanners (asserted) -----------------
+FIXTURE = {
+    "findings": 24,
+    "by_tool": {"semgrep": 12, "bandit": 9, "gitleaks": 1, "pip-audit": 2},
+    "seeded": 10,
+    "detected": 10,
+    "in_scope": 24,
+    "true_positive_findings": 22,      # B403/B404 import advisories are the 2 FPs
+    "semgrep_bandit_agree": (4, 4),    # (both detected, both expected)
+}
+
+# ---- six-commit lifecycle scenario (asserted) ------------------------------
+LIFECYCLE_KEYS = ("NEW", "STILL_OPEN", "RESOLVED", "REGRESSION", "SUPPRESSED", "UNVERIFIED")
+LIFECYCLE = {
+    "v1-baseline": ((24, 0, 0, 0, 0, 0), "COMPLETED"),
+    "v2-fix-sqli": ((4, 19, 3, 0, 2, 0), "COMPLETED"),
+    "v3-refactor": ((0, 23, 0, 0, 2, 0), "COMPLETED"),
+    "v4-revert": ((0, 23, 0, 3, 2, 0), "COMPLETED"),
+    "v5-secret-gitleaks-down": ((0, 24, 1, 0, 2, 1), "PARTIAL"),
+    "v6-gitleaks-back": ((0, 24, 1, 0, 2, 0), "COMPLETED"),
+}
+
+# ---- snapshots (recorded 8 Oct 2026, not asserted) -------------------------
+LIVE_VULPY = {
+    "url": "https://github.com/fportantier/vulpy",
+    "commit": "5249cc8b05a1c37f6b2f757b1cf16a509c327122",
+    "findings": 68,
+    "by_tool": {"bandit": 51, "semgrep": 16, "gitleaks": 1, "pip-audit": 0},
+    "in_scope": 27,
+    "scoped_cwes": 6,
+    "unpinned_not_audited": 9,
+    "seconds": 11,
+}
+SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 6dbad3d
+    "semgrep": 0, "gitleaks": 0, "pip-audit": 0,
+    "bandit_low": 3,          # B404 + 2x B603, inherent to the subprocess wrapper
+    "fixed_from_self_scan": 3,  # B607 taskkill path, the Semgrep env-taint it caused, B101 asserts
+}
+TESTS = 270

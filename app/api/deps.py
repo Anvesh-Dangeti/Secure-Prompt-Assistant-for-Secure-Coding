@@ -12,14 +12,19 @@ from __future__ import annotations
 import secrets
 from collections.abc import Iterator
 
-from fastapi import Header, HTTPException, status
+from fastapi import HTTPException, Security, status
+from fastapi.security import APIKeyHeader
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import new_session
 
+# Declared as a security scheme so the OpenAPI docs offer an "Authorize" box;
+# auto_error=False so the checks below decide the status code (401 vs 503).
+_api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 
-def require_api_key(x_api_key: str | None = Header(default=None)) -> None:
+
+def require_api_key(x_api_key: str | None = Security(_api_key_header)) -> None:
     configured = get_settings().api_key
     if configured is None or not configured.get_secret_value():
         raise HTTPException(

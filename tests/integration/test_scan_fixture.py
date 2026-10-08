@@ -15,6 +15,7 @@ from app.core.scratch import scratch_dir
 from app.pipeline import TreeScan, scan_tree
 from app.scanners import all_scanners
 from evaluation.ground_truth import load_ground_truth, score
+from evaluation.recorded_results import FIXTURE as RECORDED
 
 FIXTURE = Path(__file__).resolve().parents[2] / "fixtures" / "flask_vuln_app"
 FIXTURE_SECRET = "sk_test_4eC39HqLyjWDarjtT1zdp7dcFAKE00"
@@ -64,6 +65,12 @@ def test_all_scanners_run_cleanly(baseline: TreeScan) -> None:
 def test_every_seeded_weakness_is_detected_by_its_expected_tools(baseline: TreeScan) -> None:
     report = score(load_ground_truth(FIXTURE), baseline.findings, {r.tool for r in baseline.results if r.ok})
     assert report.recall == 1.0
+    # The numbers presented at review (evaluation/recorded_results.py) are the real ones.
+    assert len(baseline.findings) == RECORDED["findings"]
+    assert {r.tool: len(r.findings) for r in baseline.results} == RECORDED["by_tool"]
+    assert sum(s.status == "DETECTED" for s in report.seeds) == RECORDED["detected"] == len(report.seeds)
+    assert (report.true_positive_findings, report.in_scope_findings) ==         (RECORDED["true_positive_findings"], RECORDED["in_scope"])
+    assert report.corroboration("semgrep", "bandit") == RECORDED["semgrep_bandit_agree"]
     for seed in report.seeds:
         assert seed.seeded.expected_detectors <= seed.detected_by, seed.seeded.id
 
