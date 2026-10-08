@@ -138,7 +138,8 @@ def _run(project_name: str, source_type: SourceType, repo_url: str | None, inges
 
     with session_scope() as session:
         scan = session.get(Scan, scan_id)
-        assert scan is not None
+        if scan is None:  # explicit check: asserts are stripped under `python -O`
+            raise RuntimeError(f"scan {scan_id} disappeared during processing")
         scan.source_ref = source_ref
         scan.finished_at = datetime.now(timezone.utc)
         lifecycle: dict[str, int] = {}
