@@ -9,22 +9,15 @@ import pytest
 
 from app.scanners import all_scanners
 from evaluation.lifecycle_scenario import run_scenario
+from evaluation.recorded_results import LIFECYCLE, LIFECYCLE_KEYS
 
 pytestmark = [
     pytest.mark.scanners,
     pytest.mark.skipif(not all(s.is_available() for s in all_scanners()), reason="scanners not installed"),
 ]
 
-KEYS = ("NEW", "STILL_OPEN", "RESOLVED", "REGRESSION", "SUPPRESSED", "UNVERIFIED")
-EXPECTED = {
-    #                          NEW STILL RES REG SUP UNV   status
-    "v1-baseline":            ((24, 0, 0, 0, 0, 0), "COMPLETED"),
-    "v2-fix-sqli":            ((4, 19, 3, 0, 2, 0), "COMPLETED"),
-    "v3-refactor":            ((0, 23, 0, 0, 2, 0), "COMPLETED"),   # reformat + nosec: no change at all
-    "v4-revert":              ((0, 23, 0, 3, 2, 0), "COMPLETED"),
-    "v5-secret-gitleaks-down": ((0, 24, 1, 0, 2, 1), "PARTIAL"),    # gitleaks finding kept open
-    "v6-gitleaks-back":       ((0, 24, 1, 0, 2, 0), "COMPLETED"),
-}
+KEYS = LIFECYCLE_KEYS
+EXPECTED = LIFECYCLE   # the deck renders these same values
 
 
 def test_scenario_produces_the_documented_lifecycle() -> None:

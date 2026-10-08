@@ -36,7 +36,7 @@ def portable_rule_id(reported: str, known: frozenset[str]) -> str:
     """Strip the install-path prefix Semgrep adds to rule ids from a local config.
 
     With ``--config /abs/path/rules.yaml`` Semgrep reports ids such as
-    ``D.anvesh.<...>.rules.vendor.python.flask.security...``: the absolute path
+    ``D.projects.spa.rules.vendor.python.flask.security...``: the absolute path
     of the ruleset becomes part of every rule id. Left alone, every Semgrep
     fingerprint would change whenever the project directory moves, so every
     finding would be NEW on a teammate's machine. The ruleset's own ids are the
