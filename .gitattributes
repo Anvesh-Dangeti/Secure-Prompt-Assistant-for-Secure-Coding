@@ -1,0 +1,7 @@
+# Normalise line endings in the repository so scans, fingerprints and
+# fixture line numbers are identical on Windows and Linux checkouts.
+* text=auto eol=lf
+*.pptx binary
+*.docx binary
+*.zip binary
+*.png binary

@@ -1,0 +1,41 @@
+# Secure Prompt Assistant for Secure Coding
+#
+# Versions are pinned deliberately. The evaluation chapter records scanner
+# versions and ruleset commits with every result row, so an unpinned dependency
+# would silently break reproducibility between runs.
+#
+# Phase 0 only needs the scanners. The rest is installed as its phase begins.
+
+# ---- Phase 0/2: scanners -------------------------------------------------
+bandit==1.9.4
+# Semgrep has no native Windows build. On Windows use WSL, or Docker:
+#   docker run --rm -v "${PWD}:/src" semgrep/semgrep semgrep --config p/python /src
+semgrep==1.104.0 ; sys_platform != "win32"
+
+# ---- Phase 1: foundation -------------------------------------------------
+# fastapi==0.115.6
+# uvicorn[standard]==0.34.0
+# pydantic==2.10.4
+# pydantic-settings==2.7.1
+# sqlalchemy==2.0.36
+# python-json-logger==3.2.1
+
+# ---- Phase 3: repository handling ---------------------------------------
+# PyYAML==6.0.2
+
+# ---- Phase 5: AI layer ---------------------------------------------------
+# httpx==0.28.1          # provider-agnostic HTTP; works for Ollama and hosted
+
+# ---- Phase 7: dashboard --------------------------------------------------
+# streamlit==1.41.1
+
+# ---- dev / test ----------------------------------------------------------
+# Deck generator: scripts/build_review2_deck.py
+python-pptx==1.0.2
+# pytest==8.3.4
+# pytest-cov==6.0.0
+
+# ---- external tools (not pip-installable) -------------------------------
+#   gitleaks   -- https://github.com/gitleaks/gitleaks/releases
+#   pip-audit  -- pip install pip-audit==2.7.3
+#   ollama     -- https://ollama.com  then: ollama pull qwen2.5-coder:7b-instruct
