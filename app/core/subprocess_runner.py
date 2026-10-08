@@ -104,13 +104,29 @@ def _child_env(extra_env: Mapping[str, str] | None) -> dict[str, str]:
     return env
 
 
+def _windows_system_dir() -> Path:
+    """System32 as reported by the OS -- never derived from an environment variable."""
+    buffer = ctypes.create_unicode_buffer(260)
+    length = ctypes.windll.kernel32.GetSystemDirectoryW(buffer, len(buffer))  # type: ignore[attr-defined]
+    if not 0 < length < len(buffer):
+        raise OSError("could not determine the Windows system directory")
+    return Path(buffer.value)
+
+
 def _kill_tree(proc: subprocess.Popen[bytes]) -> None:
     if proc.poll() is not None:
         return
     if os.name == "nt":
         # taskkill /T terminates the child's descendants as well.
-        subprocess.run(
-            ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+        # Found by scanning this code base with its own scanners:
+        #  1. Bandit B607 -- a bare "taskkill" is resolved via the search path;
+        #  2. the first fix built the path from %SYSTEMROOT%, and Semgrep flagged
+        #     that as environment-tainted process arguments. A fix introducing a
+        #     new finding is exactly what verification gate 2 exists to catch.
+        # The system directory now comes from the Windows API.
+        taskkill = _windows_system_dir() / "taskkill.exe"
+        subprocess.run(  # noqa: S603 -- OS-reported absolute system binary, integer PID argument
+            [str(taskkill), "/F", "/T", "/PID", str(int(proc.pid))],
             capture_output=True, timeout=30, check=False,
         )
     else:

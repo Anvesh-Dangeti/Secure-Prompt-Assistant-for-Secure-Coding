@@ -54,7 +54,8 @@ def reset_engine() -> None:
 
 def new_session() -> Session:
     get_engine()
-    assert _factory is not None
+    if _factory is None:  # explicit check: asserts are stripped under `python -O`
+        raise RuntimeError("database session factory was not initialised")
     return _factory()
 
 
