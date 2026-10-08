@@ -153,6 +153,11 @@ class TrackedFinding(Base):
     cwe: Mapped[str | None] = mapped_column(String(20))
     severity: Mapped[str] = mapped_column(String(10))
     file_path: Mapped[str] = mapped_column(String(500))
+    start_line: Mapped[int | None] = mapped_column(Integer)
+    message: Mapped[str] = mapped_column(Text, default="")
+    # "file:<path>" or "package:<name>": what a later scan must have examined
+    # for this finding's absence to count as evidence of a fix.
+    scope_key: Mapped[str] = mapped_column(String(520))
     status: Mapped[LifecycleState] = mapped_column(_enum(LifecycleState))
     first_seen_scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"))
     last_seen_scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"))

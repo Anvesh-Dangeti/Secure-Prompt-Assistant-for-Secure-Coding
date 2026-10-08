@@ -27,8 +27,9 @@ from sqlalchemy import select
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.scratch import scratch_dir
-from app.db.models import LifecycleEvent, Project
+from app.db.models import LifecycleEvent, LifecycleState, Project, TrackedFinding
 from app.db.session import init_db, session_scope
+from app.intelligence.tracking import TrackingError, suppress
 from app.normalization.finding import NormalizedFinding
 from app.pipeline import TreeScan, scan_tree
 from app.scan_service import InvalidRequest, ScanSummary, scan_git, scan_zip
@@ -207,6 +208,38 @@ def cmd_history(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_findings(args: argparse.Namespace) -> int:
+    init_db()
+    with session_scope() as session:
+        project = session.scalars(select(Project).where(Project.name == args.project)).first()
+        if project is None:
+            print(f"error: no project named {args.project!r}", file=sys.stderr)
+            return 2
+        query = select(TrackedFinding).where(TrackedFinding.project_id == project.id)
+        if args.state:
+            query = query.where(TrackedFinding.status == LifecycleState(args.state.upper()))
+        rows = [[str(t.id), t.status.value, t.tool, t.cwe or "-", f"{t.file_path}:{t.start_line or '-'}",
+                 _short(t.rule_id.split(".")[-1], 30), f"#{t.first_seen_scan_id}", f"#{t.last_seen_scan_id}",
+                 str(t.regression_count)]
+                for t in session.scalars(query.order_by(TrackedFinding.status, TrackedFinding.file_path))]
+    print()
+    print(_table(rows, ["ID", "STATE", "TOOL", "CWE", "LOCATION", "RULE", "FIRST", "LAST", "REGR"]))
+    print()
+    return 0
+
+
+def cmd_suppress(args: argparse.Namespace) -> int:
+    init_db()
+    try:
+        with session_scope() as session:
+            t = suppress(session, args.tracked_id, args.reason)
+            print(f"  #{t.id} {t.tool} {t.rule_id.split('.')[-1]} -> SUPPRESSED ({t.suppressed_reason})")
+    except TrackingError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m app.cli", description="Secure Prompt Assistant")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -229,6 +262,14 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("history", help="scan history of a project")
     p.add_argument("--project", required=True)
     p.set_defaults(func=cmd_history)
+    p = sub.add_parser("findings", help="tracked findings and their lifecycle state")
+    p.add_argument("--project", required=True)
+    p.add_argument("--state", choices=[s.value.lower() for s in LifecycleState])
+    p.set_defaults(func=cmd_findings)
+    p = sub.add_parser("suppress", help="mark a tracked finding as a false positive")
+    p.add_argument("tracked_id", type=int)
+    p.add_argument("--reason", required=True)
+    p.set_defaults(func=cmd_suppress)
     return parser
 
 

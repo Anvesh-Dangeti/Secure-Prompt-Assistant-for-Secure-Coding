@@ -83,3 +83,40 @@ class ScanSummaryOut(BaseModel):
     scanners: dict[str, str]
     findings: int
     lifecycle: dict[str, int]
+
+
+class TrackedOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    fingerprint: str
+    status: str
+    tool: str
+    rule_id: str
+    cwe: str | None
+    severity: str
+    file_path: str
+    start_line: int | None
+    message: str
+    first_seen_scan_id: int
+    last_seen_scan_id: int
+    resolved_in_scan_id: int | None
+    regression_count: int
+    suppressed_reason: str | None
+
+
+class LifecycleEventOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    scan_id: int | None
+    from_status: str | None
+    to_status: str
+    unverified: bool
+    note: str | None
+    created_at: datetime
+
+
+class TrackedDetailOut(TrackedOut):
+    events: list[LifecycleEventOut] = []
+
+
+class SuppressRequest(BaseModel):
+    reason: str = Field(min_length=3, max_length=500)
