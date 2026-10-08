@@ -1,41 +1,39 @@
-# Secure Prompt Assistant for Secure Coding
+# Secure Prompt Assistant for Secure Coding -- application dependencies
 #
-# Versions are pinned deliberately. The evaluation chapter records scanner
-# versions and ruleset commits with every result row, so an unpinned dependency
-# would silently break reproducibility between runs.
+# Versions are pinned deliberately. The evaluation records scanner versions and
+# ruleset hashes with every result, and an unpinned dependency would silently
+# break reproducibility between runs.
 #
-# Phase 0 only needs the scanners. The rest is installed as its phase begins.
+# The SCANNERS are NOT installed here. Each one lives in its own isolated
+# virtualenv under .tools/ (python scripts/install_scanners.py) because:
+#   * they are external tools invoked as subprocesses, not imported libraries;
+#   * Semgrep's dependency pins conflict with FastAPI's (verified: pip backtracks
+#     to an old Semgrep sdist that refuses to build on Windows);
+#   * isolation keeps a compromised or buggy scanner dependency out of the
+#     application's own environment.
 
-# ---- Phase 0/2: scanners -------------------------------------------------
-bandit==1.9.4
-# Semgrep has no native Windows build. On Windows use WSL, or Docker:
-#   docker run --rm -v "${PWD}:/src" semgrep/semgrep semgrep --config p/python /src
-semgrep==1.104.0 ; sys_platform != "win32"
+# ---- web API ---------------------------------------------------------------
+fastapi==0.142.4
+uvicorn==0.54.0
+python-multipart==0.0.32        # multipart parsing for ZIP uploads
 
-# ---- Phase 1: foundation -------------------------------------------------
-# fastapi==0.115.6
-# uvicorn[standard]==0.34.0
-# pydantic==2.10.4
-# pydantic-settings==2.7.1
-# sqlalchemy==2.0.36
-# python-json-logger==3.2.1
+# ---- configuration -----------------------------------------------------------
+pydantic==2.13.5
+pydantic-settings==2.15.0
 
-# ---- Phase 3: repository handling ---------------------------------------
-# PyYAML==6.0.2
+# ---- persistence -----------------------------------------------------------
+SQLAlchemy==2.1.4
 
-# ---- Phase 5: AI layer ---------------------------------------------------
-# httpx==0.28.1          # provider-agnostic HTTP; works for Ollama and hosted
+# ---- data files (mapping tables, ground truth) -- always yaml.safe_load ------
+PyYAML==6.0.3
 
-# ---- Phase 7: dashboard --------------------------------------------------
-# streamlit==1.41.1
+# ---- tests -------------------------------------------------------------------
+pytest==9.1.1
+httpx==0.28.1                   # FastAPI TestClient
 
-# ---- dev / test ----------------------------------------------------------
-# Deck generator: scripts/build_review2_deck.py
+# ---- review deck generator (scripts/build_review*_deck.py) -------------------
 python-pptx==1.0.2
-# pytest==8.3.4
-# pytest-cov==6.0.0
 
-# ---- external tools (not pip-installable) -------------------------------
-#   gitleaks   -- https://github.com/gitleaks/gitleaks/releases
-#   pip-audit  -- pip install pip-audit==2.7.3
-#   ollama     -- https://ollama.com  then: ollama pull qwen2.5-coder:7b-instruct
+# ---- later phases (installed when the phase begins) -------------------------
+# Phase 7: streamlit
+# Phase 5: LLM provider HTTP calls reuse httpx
