@@ -26,7 +26,9 @@ from app.core.redaction import redact
 from app.core.scratch import scratch_dir
 from app.db.models import Finding, Project, Scan, ScannerRun, ScanStatus, SourceType
 from app.db.session import session_scope
+from app.intelligence.tracking import update_tracking
 from app.pipeline import TreeScan, scan_tree
+from app.scanners import Scanner
 from app.repository.git_clone import CloneError, clone
 from app.repository.url_validator import UnsafeRepositoryURL, ValidatedRepoURL, validate_repo_url
 from app.repository.zip_extract import UnsafeArchiveError, extract_zip
@@ -111,7 +113,7 @@ Ingest = Callable[[Path], tuple[Path, str]]
 
 
 def _run(project_name: str, source_type: SourceType, repo_url: str | None, ingest: Ingest,
-         label: str | None) -> ScanSummary:
+         label: str | None, scanners: list[Scanner] | None = None) -> ScanSummary:
     with session_scope() as session:
         project = get_or_create_project(session, project_name, source_type, repo_url)
         scan = Scan(project_id=project.id, source_type=source_type, label=label, status=ScanStatus.RUNNING)
@@ -127,7 +129,7 @@ def _run(project_name: str, source_type: SourceType, repo_url: str | None, inges
             out = work / "out"
             out.mkdir()
             root, source_ref = ingest(work)
-            tree = scan_tree(root, out)
+            tree = scan_tree(root, out, scanners)
     except (UnsafeArchiveError, CloneError, UnsafeRepositoryURL) as exc:
         error = str(exc)
     except Exception as exc:  # noqa: BLE001 -- recorded as FAILED, never as success
@@ -147,6 +149,7 @@ def _run(project_name: str, source_type: SourceType, repo_url: str | None, inges
             scan.status = _scan_status(tree)
             _persist_results(session, scan, tree)
             session.flush()
+            lifecycle = update_tracking(session, scan, tree)
         return ScanSummary(
             scan_id=scan_id, project_id=project_id, project=project_name, status=scan.status.value,
             source_ref=source_ref, error=scan.error,
@@ -166,12 +169,16 @@ def scan_git(project_name: str, url: str, label: str | None = None) -> ScanSumma
     return _run(project_name, SourceType.GIT, validated.url, ingest, label)
 
 
-def scan_zip(project_name: str, archive: Path, label: str | None = None) -> ScanSummary:
-    """Scan an uploaded archive. ``archive`` must already be inside scratch space."""
+def scan_zip(project_name: str, archive: Path, label: str | None = None,
+             scanners: list[Scanner] | None = None) -> ScanSummary:
+    """Scan an uploaded archive. ``archive`` must already be inside scratch space.
+
+    ``scanners`` overrides the scanner set (tests and the outage demo only).
+    """
     validate_project_name(project_name)
 
     def ingest(work: Path) -> tuple[Path, str]:
         extracted = extract_zip(archive, work / "src")
         return extracted.root, extracted.sha256
 
-    return _run(project_name, SourceType.ZIP, None, ingest, label)
+    return _run(project_name, SourceType.ZIP, None, ingest, label, scanners)
