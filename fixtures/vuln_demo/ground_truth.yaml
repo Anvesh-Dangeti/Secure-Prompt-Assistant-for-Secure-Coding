@@ -1,0 +1,101 @@
+# Ground truth for the demo fixture.
+#
+# This is what makes precision and recall computable: we know exactly what was
+# seeded, so a scanner finding can be scored as a true positive, and a seeded
+# weakness with no matching finding is a false negative.
+#
+# Phase 3 expands this to the full `flask_vuln_app` fixture covering all 10
+# scoped CWEs. See docs/scope_decisions.md.
+
+fixture: vuln_demo
+file: vulnerable_app.py
+language: python
+
+seeded:
+  - id: GT-001
+    cwe: CWE-798
+    name: Hard-coded credentials
+    owasp: "A07:2021 Identification and Authentication Failures"
+    line: 34
+    symbol: DB_PASSWORD
+    expected_detectors: [bandit, gitleaks]
+    notes: >-
+      Cross-scanner corroboration case. Two independent tools should find this,
+      which is what the inter-tool agreement metric measures.
+
+  - id: GT-002
+    cwe: CWE-798
+    name: Hard-coded API token
+    owasp: "A07:2021 Identification and Authentication Failures"
+    line: 35
+    symbol: API_TOKEN
+    expected_detectors: [bandit, gitleaks]
+
+  - id: GT-003
+    cwe: CWE-89
+    name: SQL injection
+    owasp: "A03:2021 Injection"
+    line: 45
+    symbol: get_user
+    expected_detectors: [bandit, semgrep]
+
+  - id: GT-004
+    cwe: CWE-78
+    name: OS command injection
+    owasp: "A03:2021 Injection"
+    line: 58
+    symbol: ping_host
+    expected_detectors: [bandit, semgrep]
+    notes: >-
+      Paper 3 section 7.2 — most frequent weakness in LLM-generated Python, and
+      no prompting technique reduced it. Our hardest remediation target.
+
+  - id: GT-005
+    cwe: CWE-22
+    name: Path traversal
+    owasp: "A01:2021 Broken Access Control"
+    line: 68
+    symbol: read_file
+    expected_detectors: [semgrep]
+    notes: >-
+      Bandit has no reliable rule for this pattern; expected to be found by
+      Semgrep only. A useful case for measuring where the two engines disagree.
+
+  - id: GT-006
+    cwe: CWE-327
+    name: Weak cryptographic hash (MD5)
+    owasp: "A02:2021 Cryptographic Failures"
+    line: 73
+    symbol: hash_password
+    expected_detectors: [bandit]
+
+  - id: GT-007
+    cwe: CWE-330
+    name: Insufficiently random values
+    owasp: "A02:2021 Cryptographic Failures"
+    line: 82
+    symbol: generate_session_token
+    expected_detectors: [bandit]
+
+  - id: GT-008
+    cwe: CWE-502
+    name: Deserialization of untrusted data
+    owasp: "A08:2021 Software and Data Integrity Failures"
+    line: 90
+    symbol: load_session
+    expected_detectors: [bandit, semgrep]
+
+  - id: GT-009
+    cwe: CWE-94
+    name: Flask debug mode enabled
+    owasp: "A05:2021 Security Misconfiguration"
+    line: 96
+    symbol: __main__
+    expected_detectors: [bandit]
+    notes: >-
+      Paper 3 section 7.2 — baseline prompts produced 54 instances on GPT-4;
+      RCI reduced it to 3. The largest single prompting effect in the literature.
+
+# Not seeded in this demo fixture (covered in the Phase 3 full fixture):
+#   CWE-79   Cross-Site Scripting        - needs a template rendering path
+#   CWE-1395 Vulnerable dependency       - needs a pinned requirements.txt

@@ -1,0 +1,35 @@
+# Private working notes -- never part of the repository.
+CLAUDE.md
+
+# Secrets and local configuration. Only .env.example is committed.
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Isolated scanner installations (see scripts/install_scanners.py)
+.tools/
+
+# Third-party rule snapshots are fetched at setup time, not redistributed
+# (see scripts/fetch_semgrep_rules.py).
+rules/vendor/
+
+# Runtime state: database and scratch space for clones/extractions.
+# Anchored to the root so app/mapping/data/ and tests/data/ stay tracked.
+*.db
+*.sqlite3
+/scratch/
+/data/
+
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
