@@ -1,0 +1,27 @@
+# Rule-level CWE assignment. Used in exactly two situations, each documented:
+#
+#   1. the tool reports no CWE at all (Gitleaks, pip-audit), or
+#   2. a specific rule carries a CWE tag that contradicts what the rule detects.
+#
+# The tool's original value is always kept in `cwe_reported`, so an override
+# is visible rather than silent. Loaded with yaml.safe_load only.
+
+version: 1
+
+tool_defaults:
+  gitleaks:
+    cwe: CWE-798
+    reason: Gitleaks detects only hard-coded secrets and reports no CWE.
+  pip-audit:
+    cwe: CWE-1395
+    reason: pip-audit reports vulnerable dependency versions (CVE/PYSEC ids), never a CWE.
+
+rules:
+  python.flask.security.injection.tainted-sql-string.tainted-sql-string:
+    cwe: CWE-89
+    reason: >-
+      Semgrep tags this rule CWE-704 (incorrect type conversion), but its pattern
+      and message describe request data reaching a SQL string -- SQL injection.
+  python.django.security.injection.tainted-sql-string.tainted-sql-string:
+    cwe: CWE-89
+    reason: Same mis-tag as the Flask variant.

@@ -1,0 +1,114 @@
+# Ground truth for the flask_vuln_app fixture.
+#
+# One seeded instance per scoped CWE (docs/scope_decisions.md). Locations are
+# given by SYMBOL, not line number: the scorer resolves each symbol with `ast`
+# at scoring time, so editing the fixture never silently breaks the ground truth.
+#
+# expected_detectors lists the tools whose *pinned ruleset contains a rule for
+# this pattern*. A tool that has no such rule is not expected to find it, so its
+# silence is not counted as a miss. A tool that has a rule and stays silent IS a
+# miss. This is what makes per-tool recall honest rather than flattering.
+#
+# Symbols:
+#   function name      -> the whole function body
+#   NAME (assignment)  -> that module-level assignment
+#   __main__           -> the `if __name__ == "__main__":` block
+#   package==version   -> that line of requirements.txt
+
+fixture: flask_vuln_app
+language: python
+
+seeded:
+  - id: GT-01
+    cwe: CWE-89
+    name: SQL injection
+    owasp: A03
+    file: app.py
+    symbol: get_user
+    expected_detectors: [semgrep, bandit]
+
+  - id: GT-02
+    cwe: CWE-78
+    name: OS command injection
+    owasp: A03
+    file: app.py
+    symbol: ping_host
+    expected_detectors: [semgrep, bandit]
+    notes: >-
+      Paper 3 section 7.2 -- the most frequent weakness in LLM-generated Python and
+      the one no prompting technique reduced. The hardest remediation target.
+
+  - id: GT-03
+    cwe: CWE-79
+    name: Cross-site scripting (unescaped HTML response)
+    owasp: A03
+    file: app.py
+    symbol: greet
+    expected_detectors: [semgrep]
+    notes: Bandit has no rule for a directly returned HTML format string.
+
+  - id: GT-04
+    cwe: CWE-798
+    name: Hard-coded credential
+    owasp: A07
+    file: config.py
+    symbol: API_TOKEN
+    expected_detectors: [bandit, gitleaks]
+    notes: Cross-scanner corroboration case -- Bandit by variable name, Gitleaks by token format.
+
+  - id: GT-05
+    cwe: CWE-22
+    name: Path traversal
+    owasp: A01
+    file: app.py
+    symbol: download_file
+    expected_detectors: [semgrep]
+    notes: Bandit has no path-traversal rule.
+
+  - id: GT-06
+    cwe: CWE-327
+    name: Broken hash for passwords (MD5)
+    owasp: A02
+    file: crypto_utils.py
+    symbol: hash_password
+    expected_detectors: [semgrep, bandit]
+
+  - id: GT-07
+    cwe: CWE-330
+    name: Insufficiently random values
+    owasp: A02
+    file: crypto_utils.py
+    symbol: make_reset_token
+    expected_detectors: [bandit]
+    notes: Semgrep's p/python ruleset has no rule for the stdlib `random` module.
+
+  - id: GT-08
+    cwe: CWE-502
+    name: Deserialisation of untrusted data (pickle)
+    owasp: A08
+    file: app.py
+    symbol: restore_session
+    expected_detectors: [bandit]
+    notes: >-
+      Semgrep's p/python ruleset has pickle rules only for shelve, AWS Lambda and
+      Django contexts, none of which apply to a Flask route.
+
+  - id: GT-09
+    cwe: CWE-94
+    name: Flask debug mode enabled
+    owasp: A05
+    file: app.py
+    symbol: __main__
+    expected_detectors: [bandit, semgrep]
+    notes: >-
+      Bandit reports CWE-94, Semgrep reports CWE-489; both are canonicalised to
+      CWE-94 (app/mapping/data/cwe_owasp.yaml) so the two tools agree.
+
+  - id: GT-10
+    cwe: CWE-1395
+    name: Dependency with known vulnerabilities (PyYAML 5.3)
+    owasp: A06
+    file: requirements.txt
+    symbol: PyYAML==5.3
+    expected_detectors: [pip-audit]
+    notes: The only place in this project where CVE identifiers are attached honestly.

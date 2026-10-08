@@ -16,6 +16,7 @@ from app.api.deps import require_api_key
 from app.core.config import get_settings
 from app.db.models import Project
 from app.db.session import new_session
+from app.scanners import all_scanners
 
 router = APIRouter()
 
@@ -32,7 +33,14 @@ def _database_ok() -> bool:
 @router.get("/health", tags=["system"])
 def health() -> dict[str, object]:
     db_ok = _database_ok()
-    return {"status": "ok" if db_ok else "degraded", "database": "ok" if db_ok else "error"}
+    scanners = {s.name: s.is_available() for s in all_scanners()}
+    healthy = db_ok and all(scanners.values())
+    return {
+        "status": "ok" if healthy else "degraded",
+        "database": "ok" if db_ok else "error",
+        # Availability only -- versions and paths are behind authentication.
+        "scanners": {name: "available" if ok else "missing" for name, ok in scanners.items()},
+    }
 
 
 @router.get("/api/v1/system/info", tags=["system"], dependencies=[Depends(require_api_key)])
@@ -40,6 +48,7 @@ def system_info() -> dict[str, object]:
     settings = get_settings()
     return {
         "version": __version__,
+        "scanners": {s.name: s.version() for s in all_scanners()},
         "limits": {
             "scanner_timeout_seconds": settings.scanner_timeout_seconds,
             "clone_timeout_seconds": settings.clone_timeout_seconds,
