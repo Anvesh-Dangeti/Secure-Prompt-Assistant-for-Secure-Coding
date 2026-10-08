@@ -5,4 +5,4 @@ each finding's identity across commits, and (later phases) generate measured
 remediation prompts whose fixes are verified by re-scanning -- never by the LLM.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"

@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import health
+from app.api import health, projects
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.db.session import init_db
@@ -35,6 +35,19 @@ def create_app() -> FastAPI:
     app = FastAPI(title="Secure Prompt Assistant", version=__version__, lifespan=lifespan)
 
     @app.middleware("http")
+    async def body_size_limit(request: Request, call_next):  # noqa: ANN001, ANN202
+        # The multipart parser spools an upload to disk before any handler runs,
+        # so the size cap has to be enforced here, on the declared length, first.
+        if request.method in {"POST", "PUT", "PATCH"}:
+            limit = get_settings().max_upload_bytes + 64 * 1024  # multipart framing overhead
+            declared = request.headers.get("content-length")
+            if declared is None:
+                return JSONResponse(status_code=411, content={"detail": "Content-Length required"})
+            if not declared.isdigit() or int(declared) > limit:
+                return JSONResponse(status_code=413, content={"detail": "request body too large"})
+        return await call_next(request)
+
+    @app.middleware("http")
     async def security_headers(request: Request, call_next):  # noqa: ANN001, ANN202
         response = await call_next(request)
         response.headers.setdefault("X-Content-Type-Options", "nosniff")
@@ -51,6 +64,7 @@ def create_app() -> FastAPI:
         return JSONResponse(status_code=500, content={"detail": "internal error"})
 
     app.include_router(health.router)
+    app.include_router(projects.router)
     return app
 
 
