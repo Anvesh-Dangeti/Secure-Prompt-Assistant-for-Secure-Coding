@@ -1,0 +1,718 @@
+{
+ "version": "2.1.0",
+ "runs": [
+  {
+   "invocations": [
+    {
+     "executionSuccessful": true,
+     "toolExecutionNotifications": []
+    }
+   ],
+   "results": [
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 78,
+         "endLine": 40,
+         "snippet": {
+          "text": "    user_id = request.args.get(\"id\")\n    conn = sqlite3.connect(\"app.db\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)"
+         },
+         "startColumn": 5,
+         "startLine": 37
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django's QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 77,
+         "endLine": 40,
+         "snippet": {
+          "text": "    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)"
+         },
+         "startColumn": 20,
+         "startLine": 40
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.tainted-sql-string.tainted-sql-string"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 70,
+         "endLine": 48,
+         "snippet": {
+          "text": "    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)"
+         },
+         "startColumn": 14,
+         "startLine": 48
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the server. Do not let users choose the command to run. In general, prefer to use Python API versions of system commands. If you must use subprocess, use a dictionary to allowlist a set of commands."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.subprocess-injection.subprocess-injection"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 57,
+         "endLine": 48,
+         "snippet": {
+          "text": "    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)"
+         },
+         "startColumn": 38,
+         "startLine": 48
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected subprocess function 'check_output' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 69,
+         "endLine": 48,
+         "snippet": {
+          "text": "    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)"
+         },
+         "startColumn": 65,
+         "startLine": 48
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Found 'subprocess' function 'check_output' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.subprocess-shell-true.subprocess-shell-true"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 40,
+         "endLine": 56,
+         "snippet": {
+          "text": "    return \"<h1>Hello, %s!</h1>\" % name"
+         },
+         "startColumn": 5,
+         "startLine": 56
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with 'render_template()'."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.directly-returned-format-string.directly-returned-format-string"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 40,
+         "endLine": 56,
+         "snippet": {
+          "text": "    return \"<h1>Hello, %s!</h1>\" % name"
+         },
+         "startColumn": 12,
+         "startLine": 56
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.raw-html-format.raw-html-format"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 40,
+         "endLine": 56,
+         "snippet": {
+          "text": "    return \"<h1>Hello, %s!</h1>\" % name"
+         },
+         "startColumn": 12,
+         "startLine": 56
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.raw-html-concat.raw-html-format"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 66,
+         "endLine": 63,
+         "snippet": {
+          "text": "    with open(os.path.join(DATA_DIR, filename), encoding=\"utf-8\") as handle:"
+         },
+         "startColumn": 10,
+         "startLine": 63
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise it could result in path traversal attacks."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.path-traversal-open.path-traversal-open"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "app.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 24,
+         "endLine": 83,
+         "snippet": {
+          "text": "    app.run(debug=True)"
+         },
+         "startColumn": 5,
+         "startLine": 83
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug' using system environment variables."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.debug-enabled.debug-enabled"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "crypto_utils.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 49,
+         "endLine": 13,
+         "snippet": {
+          "text": "    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()"
+         },
+         "startColumn": 12,
+         "startLine": 13
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5"
+    },
+    {
+     "fingerprints": {
+      "matchBasedId/v1": "requires login"
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "artifactLocation": {
+         "uri": "crypto_utils.py",
+         "uriBaseId": "%SRCROOT%"
+        },
+        "region": {
+         "endColumn": 61,
+         "endLine": 13,
+         "snippet": {
+          "text": "    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()"
+         },
+         "startColumn": 12,
+         "startLine": 13
+        }
+       }
+      }
+     ],
+     "message": {
+      "text": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`."
+     },
+     "properties": {},
+     "ruleId": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.md5-used-as-password.md5-used-as-password"
+    }
+   ],
+   "tool": {
+    "driver": {
+     "name": "Semgrep OSS",
+     "rules": [
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead."
+       },
+       "help": {
+        "markdown": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.django.security.injection.raw-html-format.raw-html-format)\n - [https://docs.djangoproject.com/en/3.2/topics/http/shortcuts/#render](https://docs.djangoproject.com/en/3.2/topics/http/shortcuts/#render)\n - [https://docs.djangoproject.com/en/3.2/topics/security/#cross-site-scripting-xss-protection](https://docs.djangoproject.com/en/3.2/topics/security/#cross-site-scripting-xss-protection)\n",
+        "text": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead."
+       },
+       "helpUri": "https://semgrep.dev/r/python.django.security.injection.raw-html-format.raw-html-format",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.raw-html-format.raw-html-format",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.raw-html-format.raw-html-format",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "OWASP-A07:2017 - Cross-Site Scripting (XSS)",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.raw-html-format.raw-html-format"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django's QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`."
+       },
+       "help": {
+        "markdown": "User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django's QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute)\n - [https://docs.djangoproject.com/en/3.0/topics/security/#sql-injection-protection](https://docs.djangoproject.com/en/3.0/topics/security/#sql-injection-protection)\n",
+        "text": "User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django's QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`."
+       },
+       "helpUri": "https://semgrep.dev/r/python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug' using system environment variables."
+       },
+       "help": {
+        "markdown": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug' using system environment variables.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.flask.security.audit.debug-enabled.debug-enabled)\n - [https://labs.detectify.com/2015/10/02/how-patreon-got-hacked-publicly-exposed-werkzeug-debugger/](https://labs.detectify.com/2015/10/02/how-patreon-got-hacked-publicly-exposed-werkzeug-debugger/)\n",
+        "text": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug' using system environment variables."
+       },
+       "helpUri": "https://semgrep.dev/r/python.flask.security.audit.debug-enabled.debug-enabled",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.debug-enabled.debug-enabled",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.debug-enabled.debug-enabled",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-489: Active Debug Code",
+         "HIGH CONFIDENCE",
+         "OWASP-A06:2017 - Security Misconfiguration",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.debug-enabled.debug-enabled"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with 'render_template()'."
+       },
+       "help": {
+        "markdown": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with 'render_template()'.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.flask.security.audit.directly-returned-format-string.directly-returned-format-string)\n - [https://owasp.org/Top10/A03_2021-Injection](https://owasp.org/Top10/A03_2021-Injection)\n",
+        "text": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with 'render_template()'."
+       },
+       "helpUri": "https://semgrep.dev/r/python.flask.security.audit.directly-returned-format-string.directly-returned-format-string",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.directly-returned-format-string.directly-returned-format-string",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.directly-returned-format-string.directly-returned-format-string",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "OWASP-A07:2017 - Cross-Site Scripting (XSS)",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.audit.directly-returned-format-string.directly-returned-format-string"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise it could result in path traversal attacks."
+       },
+       "help": {
+        "markdown": "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise it could result in path traversal attacks.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.flask.security.injection.path-traversal-open.path-traversal-open)\n - [https://owasp.org/www-community/attacks/Path_Traversal](https://owasp.org/www-community/attacks/Path_Traversal)\n",
+        "text": "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise it could result in path traversal attacks."
+       },
+       "helpUri": "https://semgrep.dev/r/python.flask.security.injection.path-traversal-open.path-traversal-open",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.path-traversal-open.path-traversal-open",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.path-traversal-open.path-traversal-open",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A01:2021 - Broken Access Control",
+         "OWASP-A01:2025 - Broken Access Control",
+         "OWASP-A05:2017 - Broken Access Control",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.path-traversal-open.path-traversal-open"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead."
+       },
+       "help": {
+        "markdown": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.flask.security.injection.raw-html-concat.raw-html-format)\n - [https://flask.palletsprojects.com/en/2.0.x/security/#cross-site-scripting-xss](https://flask.palletsprojects.com/en/2.0.x/security/#cross-site-scripting-xss)\n",
+        "text": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead."
+       },
+       "helpUri": "https://semgrep.dev/r/python.flask.security.injection.raw-html-concat.raw-html-format",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.raw-html-concat.raw-html-format",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.raw-html-concat.raw-html-format",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "OWASP-A07:2017 - Cross-Site Scripting (XSS)",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.raw-html-concat.raw-html-format"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the server. Do not let users choose the command to run. In general, prefer to use Python API versions of system commands. If you must use subprocess, use a dictionary to allowlist a set of commands."
+       },
+       "help": {
+        "markdown": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the server. Do not let users choose the command to run. In general, prefer to use Python API versions of system commands. If you must use subprocess, use a dictionary to allowlist a set of commands.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.flask.security.injection.subprocess-injection.subprocess-injection)\n - [https://semgrep.dev/docs/cheat-sheets/python-command-injection/](https://semgrep.dev/docs/cheat-sheets/python-command-injection/)\n",
+        "text": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the server. Do not let users choose the command to run. In general, prefer to use Python API versions of system commands. If you must use subprocess, use a dictionary to allowlist a set of commands."
+       },
+       "helpUri": "https://semgrep.dev/r/python.flask.security.injection.subprocess-injection.subprocess-injection",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.subprocess-injection.subprocess-injection",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.subprocess-injection.subprocess-injection",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+         "HIGH CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.subprocess-injection.subprocess-injection"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries."
+       },
+       "help": {
+        "markdown": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.flask.security.injection.tainted-sql-string.tainted-sql-string)\n - [https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-textual-sql](https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-textual-sql)\n - [https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_quick_guide.htm](https://www.tutorialspoint.com/sqlalchemy/sqlalchemy_quick_guide.htm)\n - [https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-more-specific-text-with-table-expression-literal-column-and-expression-column](https://docs.sqlalchemy.org/en/14/core/tutorial.html#using-more-specific-text-with-table-expression-literal-column-and-expression-column)\n",
+        "text": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries."
+       },
+       "helpUri": "https://semgrep.dev/r/python.flask.security.injection.tainted-sql-string.tainted-sql-string",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.tainted-sql-string.tainted-sql-string",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.tainted-sql-string.tainted-sql-string",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-704: Incorrect Type Conversion or Cast",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.flask.security.injection.tainted-sql-string.tainted-sql-string"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`."
+       },
+       "help": {
+        "markdown": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.lang.security.audit.md5-used-as-password.md5-used-as-password)\n - [https://tools.ietf.org/html/rfc6151](https://tools.ietf.org/html/rfc6151)\n - [https://crypto.stackexchange.com/questions/44151/how-does-the-flame-malware-take-advantage-of-md5-collision](https://crypto.stackexchange.com/questions/44151/how-does-the-flame-malware-take-advantage-of-md5-collision)\n - [https://pycryptodome.readthedocs.io/en/latest/src/hash/sha3_256.html](https://pycryptodome.readthedocs.io/en/latest/src/hash/sha3_256.html)\n - [https://security.stackexchange.com/questions/211/how-to-securely-hash-passwords](https://security.stackexchange.com/questions/211/how-to-securely-hash-passwords)\n - [https://github.com/returntocorp/semgrep-rules/issues/1609](https://github.com/returntocorp/semgrep-rules/issues/1609)\n - [https://docs.python.org/3/library/hashlib.html#hashlib.scrypt](https://docs.python.org/3/library/hashlib.html#hashlib.scrypt)\n",
+        "text": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`."
+       },
+       "helpUri": "https://semgrep.dev/r/python.lang.security.audit.md5-used-as-password.md5-used-as-password",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.md5-used-as-password.md5-used-as-password",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.md5-used-as-password.md5-used-as-password",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-327: Use of a Broken or Risky Cryptographic Algorithm",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A02:2021 - Cryptographic Failures",
+         "OWASP-A03:2017 - Sensitive Data Exposure",
+         "OWASP-A04:2025 - Cryptographic Failures",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.md5-used-as-password.md5-used-as-password"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+       },
+       "help": {
+        "markdown": "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.lang.security.audit.subprocess-shell-true.subprocess-shell-true)\n - [https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess](https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess)\n - [https://docs.python.org/3/library/subprocess.html](https://docs.python.org/3/library/subprocess.html)\n",
+        "text": "Found 'subprocess' function '$FUNC' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead."
+       },
+       "helpUri": "https://semgrep.dev/r/python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.audit.subprocess-shell-true.subprocess-shell-true"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "error"
+       },
+       "fullDescription": {
+        "text": "Detected subprocess function '$FUNC' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'."
+       },
+       "help": {
+        "markdown": "Detected subprocess function '$FUNC' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use)\n - [https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess](https://stackoverflow.com/questions/3172470/actual-meaning-of-shell-true-in-subprocess)\n - [https://docs.python.org/3/library/subprocess.html](https://docs.python.org/3/library/subprocess.html)\n - [https://docs.python.org/3/library/shlex.html](https://docs.python.org/3/library/shlex.html)\n - [https://semgrep.dev/docs/cheat-sheets/python-command-injection/](https://semgrep.dev/docs/cheat-sheets/python-command-injection/)\n",
+        "text": "Detected subprocess function '$FUNC' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'."
+       },
+       "helpUri": "https://semgrep.dev/r/python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A01:2017 - Injection",
+         "OWASP-A03:2021 - Injection",
+         "OWASP-A05:2025 - Injection",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use"
+       }
+      },
+      {
+       "defaultConfiguration": {
+        "level": "warning"
+       },
+       "fullDescription": {
+        "text": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead."
+       },
+       "help": {
+        "markdown": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.\n\n<b>References:</b>\n - [Semgrep Rule](https://semgrep.dev/r/python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5)\n - [https://www.schneier.com/blog/archives/2012/10/when_will_we_se.html](https://www.schneier.com/blog/archives/2012/10/when_will_we_se.html)\n - [https://www.trendmicro.com/vinfo/us/security/news/vulnerabilities-and-exploits/sha-1-collision-signals-the-end-of-the-algorithm-s-viability](https://www.trendmicro.com/vinfo/us/security/news/vulnerabilities-and-exploits/sha-1-collision-signals-the-end-of-the-algorithm-s-viability)\n - [http://2012.sharcs.org/slides/stevens.pdf](http://2012.sharcs.org/slides/stevens.pdf)\n - [https://pycryptodome.readthedocs.io/en/latest/src/hash/sha3_256.html](https://pycryptodome.readthedocs.io/en/latest/src/hash/sha3_256.html)\n",
+        "text": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead."
+       },
+       "helpUri": "https://semgrep.dev/r/python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5",
+       "id": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5",
+       "name": "C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5",
+       "properties": {
+        "precision": "very-high",
+        "tags": [
+         "CWE-327: Use of a Broken or Risky Cryptographic Algorithm",
+         "MEDIUM CONFIDENCE",
+         "OWASP-A02:2021 - Cryptographic Failures",
+         "OWASP-A03:2017 - Sensitive Data Exposure",
+         "OWASP-A04:2025 - Cryptographic Failures",
+         "security"
+        ]
+       },
+       "shortDescription": {
+        "text": "Semgrep Finding: C.Users.Anvesh.AppData.Local.Temp.claude.D--anvesh-EM-IITH-JUL26---NOV26-Secure-Software-Engineering-project-ongoing.760779de-c6f7-4e76-9f17-1d30a6518f06.scratchpad.probe.python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5"
+       }
+      }
+     ],
+     "semanticVersion": "1.180.0"
+    }
+   }
+  }
+ ],
+ "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/os/schemas/sarif-schema-2.1.0.json"
+}

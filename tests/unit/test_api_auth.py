@@ -20,7 +20,9 @@ def test_health_is_public_and_reveals_no_configuration(client: TestClient) -> No
     response = client.get("/health")
     assert response.status_code == 200
     body = response.json()
-    assert body["status"] == "ok"
+    assert body["database"] == "ok"
+    assert set(body["scanners"]) == {"semgrep", "bandit", "gitleaks", "pip-audit"}
+    assert set(body["scanners"].values()) <= {"available", "missing"}   # no versions, no paths
     assert "limits" not in body and "version" not in body
 
 

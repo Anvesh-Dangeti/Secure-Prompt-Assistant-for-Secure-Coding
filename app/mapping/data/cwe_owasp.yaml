@@ -1,0 +1,85 @@
+# CWE -> OWASP Top 10 (2021) mapping, CWE canonicalisation, and project scope.
+#
+# Deliberately small and explicit (brief section 11: a maintainable mechanism,
+# not thousands of hand-written entries). Extending coverage means adding rows
+# here -- no code change. Loaded with yaml.safe_load only.
+
+version: 1
+
+owasp_2021:
+  A01: "A01:2021 Broken Access Control"
+  A02: "A02:2021 Cryptographic Failures"
+  A03: "A03:2021 Injection"
+  A04: "A04:2021 Insecure Design"
+  A05: "A05:2021 Security Misconfiguration"
+  A06: "A06:2021 Vulnerable and Outdated Components"
+  A07: "A07:2021 Identification and Authentication Failures"
+  A08: "A08:2021 Software and Data Integrity Failures"
+  A09: "A09:2021 Security Logging and Monitoring Failures"
+  A10: "A10:2021 Server-Side Request Forgery"
+
+# The 10 scoped weaknesses (docs/scope_decisions.md), in canonical form.
+scoped:
+  - CWE-89
+  - CWE-78
+  - CWE-79
+  - CWE-798
+  - CWE-22
+  - CWE-327
+  - CWE-330
+  - CWE-502
+  - CWE-1395
+  - CWE-94
+
+cwe_to_owasp:
+  # scoped
+  CWE-22: A01
+  CWE-327: A02
+  CWE-330: A02
+  CWE-89: A03
+  CWE-78: A03
+  CWE-79: A03
+  CWE-94: A05
+  CWE-1395: A06
+  CWE-798: A07
+  CWE-502: A08
+  # out of scope but common, mapped so the dashboard can still categorise them
+  CWE-605: A05    # binding to all interfaces
+  CWE-668: A01    # exposure of resource to wrong sphere
+  CWE-918: A10    # SSRF
+  CWE-295: A07    # improper certificate validation
+  CWE-611: A05    # XXE
+  CWE-319: A02    # cleartext transmission
+  CWE-532: A09    # sensitive information in logs
+  CWE-601: A01    # open redirect
+  CWE-352: A01    # CSRF
+  CWE-95: A03     # eval injection
+  CWE-96: A03     # static code injection / SSTI
+
+# Scanners disagree on granularity. Each alias maps a CWE a tool reports onto
+# the canonical CWE this project reasons about, with the reason recorded.
+# Without this, two tools reporting one weakness look like two weaknesses,
+# corrupting both inter-tool agreement and the lifecycle.
+aliases:
+  CWE-259:
+    canonical: CWE-798
+    reason: >-
+      Hard-coded password (259) is a child of hard-coded credentials (798).
+      Bandit reports 259 for the same weakness Gitleaks reports as 798.
+  CWE-328:
+    canonical: CWE-327
+    reason: Reversible one-way hash (328) is a specific case of a broken crypto algorithm (327).
+  CWE-916:
+    canonical: CWE-327
+    reason: Password hash with insufficient effort (916) -- same remediation as 327 for MD5/SHA1 passwords.
+  CWE-215:
+    canonical: CWE-94
+    reason: >-
+      Flask debug mode. The project's scoped weakness is "debug mode enabled";
+      tools file it under 94 (Bandit: the debugger allows code execution), 215
+      or 489. Canonicalised so both SAST engines agree on one identity.
+  CWE-489:
+    canonical: CWE-94
+    reason: >-
+      Semgrep reports Flask debug=True as CWE-489 (active debug code); Bandit
+      reports the same line as CWE-94. See CWE-215 above.

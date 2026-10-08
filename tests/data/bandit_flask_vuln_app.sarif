@@ -1,0 +1,520 @@
+{
+ "runs": [
+  {
+   "tool": {
+    "driver": {
+     "name": "Bandit",
+     "organization": "PyCQA",
+     "rules": [
+      {
+       "id": "B403",
+       "name": "blacklist",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-502"
+        ],
+        "precision": "high"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b403-import-pickle"
+      },
+      {
+       "id": "B404",
+       "name": "blacklist",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-78"
+        ],
+        "precision": "high"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_imports.html#b404-import-subprocess"
+      },
+      {
+       "id": "B608",
+       "name": "hardcoded_sql_expressions",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-89"
+        ],
+        "precision": "medium"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/plugins/b608_hardcoded_sql_expressions.html"
+      },
+      {
+       "id": "B602",
+       "name": "subprocess_popen_with_shell_equals_true",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-78"
+        ],
+        "precision": "high"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/plugins/b602_subprocess_popen_with_shell_equals_true.html"
+      },
+      {
+       "id": "B301",
+       "name": "blacklist",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-502"
+        ],
+        "precision": "high"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b301-pickle"
+      },
+      {
+       "id": "B201",
+       "name": "flask_debug_true",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-94"
+        ],
+        "precision": "medium"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/plugins/b201_flask_debug_true.html"
+      },
+      {
+       "id": "B105",
+       "name": "hardcoded_password_string",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-259"
+        ],
+        "precision": "medium"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/plugins/b105_hardcoded_password_string.html"
+      },
+      {
+       "id": "B324",
+       "name": "hashlib",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-327"
+        ],
+        "precision": "high"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/plugins/b324_hashlib.html"
+      },
+      {
+       "id": "B311",
+       "name": "blacklist",
+       "properties": {
+        "tags": [
+         "security",
+         "external/cwe/cwe-330"
+        ],
+        "precision": "high"
+       },
+       "helpUri": "https://bandit.readthedocs.io/en/1.9.4/blacklists/blacklist_calls.html#b311-random"
+      }
+     ],
+     "version": "1.9.4",
+     "semanticVersion": "1.9.4"
+    }
+   },
+   "invocations": [
+    {
+     "executionSuccessful": true
+    }
+   ],
+   "properties": {
+    "metrics": {
+     "_totals": {
+      "loc": 80,
+      "nosec": 0,
+      "skipped_tests": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "SEVERITY.LOW": 4,
+      "CONFIDENCE.LOW": 0,
+      "SEVERITY.MEDIUM": 2,
+      "CONFIDENCE.MEDIUM": 3,
+      "SEVERITY.HIGH": 3,
+      "CONFIDENCE.HIGH": 6
+     },
+     ".\\app.py": {
+      "loc": 60,
+      "nosec": 0,
+      "skipped_tests": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "SEVERITY.LOW": 2,
+      "SEVERITY.MEDIUM": 2,
+      "SEVERITY.HIGH": 2,
+      "CONFIDENCE.UNDEFINED": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 2,
+      "CONFIDENCE.HIGH": 4
+     },
+     ".\\config.py": {
+      "loc": 8,
+      "nosec": 0,
+      "skipped_tests": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.HIGH": 0,
+      "CONFIDENCE.UNDEFINED": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.HIGH": 0
+     },
+     ".\\crypto_utils.py": {
+      "loc": 12,
+      "nosec": 0,
+      "skipped_tests": 0,
+      "SEVERITY.UNDEFINED": 0,
+      "SEVERITY.LOW": 1,
+      "SEVERITY.MEDIUM": 0,
+      "SEVERITY.HIGH": 1,
+      "CONFIDENCE.UNDEFINED": 0,
+      "CONFIDENCE.LOW": 0,
+      "CONFIDENCE.MEDIUM": 0,
+      "CONFIDENCE.HIGH": 2
+     }
+    }
+   },
+   "results": [
+    {
+     "message": {
+      "text": "Consider possible security implications associated with pickle module."
+     },
+     "level": "note",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "import pickle\n"
+         },
+         "endColumn": 14,
+         "endLine": 14,
+         "startColumn": 1,
+         "startLine": 14
+        },
+        "artifactLocation": {
+         "uri": "app.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "import os\nimport pickle\nimport sqlite3\n"
+         },
+         "endLine": 15,
+         "startLine": 13
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "HIGH",
+      "issue_severity": "LOW"
+     },
+     "ruleId": "B403",
+     "ruleIndex": 0
+    },
+    {
+     "message": {
+      "text": "Consider possible security implications associated with the subprocess module."
+     },
+     "level": "note",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "import subprocess\n"
+         },
+         "endColumn": 18,
+         "endLine": 16,
+         "startColumn": 1,
+         "startLine": 16
+        },
+        "artifactLocation": {
+         "uri": "app.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "import sqlite3\nimport subprocess\n\n"
+         },
+         "endLine": 17,
+         "startLine": 15
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "HIGH",
+      "issue_severity": "LOW"
+     },
+     "ruleId": "B404",
+     "ruleIndex": 1
+    },
+    {
+     "message": {
+      "text": "Possible SQL injection vector through string-based query construction."
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)\n"
+         },
+         "endColumn": 67,
+         "endLine": 40,
+         "startColumn": 20,
+         "startLine": 40
+        },
+        "artifactLocation": {
+         "uri": "app.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)\n    return {\"rows\": cursor.fetchall()}\n"
+         },
+         "endLine": 41,
+         "startLine": 39
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "MEDIUM",
+      "issue_severity": "MEDIUM"
+     },
+     "ruleId": "B608",
+     "ruleIndex": 2
+    },
+    {
+     "message": {
+      "text": "subprocess call with shell=True identified, security issue."
+     },
+     "level": "error",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)\n"
+         },
+         "endColumn": 70,
+         "endLine": 48,
+         "startColumn": 14,
+         "startLine": 48
+        },
+        "artifactLocation": {
+         "uri": "app.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "    host = request.args.get(\"host\")\n    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)\n    return output\n"
+         },
+         "endLine": 49,
+         "startLine": 47
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "HIGH",
+      "issue_severity": "HIGH"
+     },
+     "ruleId": "B602",
+     "ruleIndex": 3
+    },
+    {
+     "message": {
+      "text": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue."
+     },
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "    return {\"session\": str(pickle.loads(blob))}\n"
+         },
+         "endColumn": 46,
+         "endLine": 71,
+         "startColumn": 28,
+         "startLine": 71
+        },
+        "artifactLocation": {
+         "uri": "app.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "    blob = request.get_data()\n    return {\"session\": str(pickle.loads(blob))}\n\n"
+         },
+         "endLine": 72,
+         "startLine": 70
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "HIGH",
+      "issue_severity": "MEDIUM"
+     },
+     "ruleId": "B301",
+     "ruleIndex": 4
+    },
+    {
+     "message": {
+      "text": "A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code."
+     },
+     "level": "error",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "    app.run(debug=True)\n"
+         },
+         "endColumn": 24,
+         "endLine": 83,
+         "startColumn": 5,
+         "startLine": 83
+        },
+        "artifactLocation": {
+         "uri": "app.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "    # CWE-94 / CWE-215: Flask debug mode exposes the interactive Werkzeug console.\n    app.run(debug=True)\n"
+         },
+         "endLine": 83,
+         "startLine": 82
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "MEDIUM",
+      "issue_severity": "HIGH"
+     },
+     "ruleId": "B201",
+     "ruleIndex": 5
+    },
+    {
+     "message": {
+      "text": "Possible hardcoded password: 'sk_test_4eC39HqLyjWDarjtT1zdp7dcFAKE00'"
+     },
+     "level": "note",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "API_TOKEN = \"sk_test_4eC39HqLyjWDarjtT1zdp7dcFAKE00\"\n"
+         },
+         "endColumn": 53,
+         "endLine": 10,
+         "startColumn": 13,
+         "startLine": 10
+        },
+        "artifactLocation": {
+         "uri": "config.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "\nAPI_TOKEN = \"sk_test_4eC39HqLyjWDarjtT1zdp7dcFAKE00\"\n"
+         },
+         "endLine": 10,
+         "startLine": 9
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "MEDIUM",
+      "issue_severity": "LOW"
+     },
+     "ruleId": "B105",
+     "ruleIndex": 6
+    },
+    {
+     "message": {
+      "text": "Use of weak MD5 hash for security. Consider usedforsecurity=False"
+     },
+     "level": "error",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()\n"
+         },
+         "endColumn": 49,
+         "endLine": 13,
+         "startColumn": 12,
+         "startLine": 13
+        },
+        "artifactLocation": {
+         "uri": "crypto_utils.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "    \"\"\"CWE-327 broken hash: MD5 is unsuitable for password storage.\"\"\"\n    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()\n\n"
+         },
+         "endLine": 14,
+         "startLine": 12
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "HIGH",
+      "issue_severity": "HIGH"
+     },
+     "ruleId": "B324",
+     "ruleIndex": 7
+    },
+    {
+     "message": {
+      "text": "Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+     },
+     "level": "note",
+     "locations": [
+      {
+       "physicalLocation": {
+        "region": {
+         "snippet": {
+          "text": "    return \"%06d\" % random.randint(0, 999999)\n"
+         },
+         "endColumn": 46,
+         "endLine": 18,
+         "startColumn": 21,
+         "startLine": 18
+        },
+        "artifactLocation": {
+         "uri": "crypto_utils.py"
+        },
+        "contextRegion": {
+         "snippet": {
+          "text": "    \"\"\"CWE-330 insufficiently random values: `random` is not a CSPRNG.\"\"\"\n    return \"%06d\" % random.randint(0, 999999)\n"
+         },
+         "endLine": 18,
+         "startLine": 17
+        }
+       }
+      }
+     ],
+     "properties": {
+      "issue_confidence": "HIGH",
+      "issue_severity": "LOW"
+     },
+     "ruleId": "B311",
+     "ruleIndex": 8
+    }
+   ]
+  }
+ ],
+ "version": "2.1.0",
+ "$schema": "https://json.schemastore.org/sarif-2.1.0.json"
+}
