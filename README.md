@@ -38,7 +38,7 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 7–8 | Dashboard · evaluation (ESR) | ⬜ Review 5 |
 | 9–10 | Hardening · final | ⬜ Review 6 |
 
-On the seeded fixture: **10/10 weaknesses detected**, precision 22/24, 270 automated tests.
+On the seeded fixture: **10/10 weaknesses detected**, precision 22/24, 278 automated tests.
 
 ---
 

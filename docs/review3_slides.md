@@ -76,7 +76,7 @@ fix introduced a new Semgrep finding. Plus a reported gap: Gitleaks misses `DB_P
 ## 11 · A real repository, and our own code
 vulpy by URL: 68 findings in ~11 s, 27 in scope over 6 CWEs, 9 unpinned requirements not audited
 (snapshot, 8 Oct 2026). Own code: Semgrep 0 · Gitleaks 0 · pip-audit 0 · Bandit 3 LOW (inherent);
-3 real issues fixed. 270 tests.
+3 real issues fixed. 278 tests.
 
 ## 12 · What comes next
 Review 4: Phase 5 AI layer + Phase 6 triple-gate verification. Review 5: dashboard + ESR evaluation.
