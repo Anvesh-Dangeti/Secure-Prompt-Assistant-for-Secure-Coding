@@ -53,4 +53,4 @@ SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 
     "bandit_low": 3,          # B404 + 2x B603, inherent to the subprocess wrapper
     "fixed_from_self_scan": 3,  # B607 taskkill path, the Semgrep env-taint it caused, B101 asserts
 }
-TESTS = 270
+TESTS = 278
