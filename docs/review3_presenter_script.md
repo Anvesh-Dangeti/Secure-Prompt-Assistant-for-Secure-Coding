@@ -60,6 +60,53 @@ Notes:
 If short on time, cut slides 3 and 11 — never 5, 7, 8. In the demo, steps 1–3 are the core; 4–8 are
 optional.
 
+## Progress — what a strict panel will ask
+
+The panel asked for reasonable progress over three weeks. Lead with what was promised against what was
+delivered, then be exact about what is not built yet.
+
+**Opening line (slide 2):** "At Review 2 we committed to Phases 1–3. All three are done, plus Phase 4, which
+we had not promised. Of the 12 original project requirements, 5 are met, 4 are partly met, and the
+remaining 3 are the AI layer, scheduled for Review 4."
+
+### The 12 original requirements
+
+| # | Requirement | Status | Where it closes |
+|---|---|---|---|
+| 1 | Scan source code with open-source scanners | ✅ done — Semgrep, Bandit, Gitleaks, pip-audit | Phase 2 |
+| 2 | Identify vulnerabilities and weaknesses | ✅ done — 10/10 seeded weaknesses detected | Phase 2 |
+| 3 | Map to OWASP Top 10, CWE, CVE | ✅ done — CVE only where pip-audit reports a known vulnerable package | Phase 2 |
+| 4 | Generate a remediation prompt per finding | ⬜ next — strategies S0–S8 + prompt linter | Phase 5 · Review 4 |
+| 5 | Provide the prompt to Copilot or another assistant | ⬜ next — manual mode | Phase 5 · Review 4 |
+| 6 | Implement the secure-code change | ⬜ next — sandboxed apply in a throwaway worktree | Phase 6 · Review 4 |
+| 7 | Re-run the security scanner | ✅ done — every rescan of a project is a full scan | Phases 3–4 |
+| 8 | Verify the original vulnerability was resolved | ◐ partly — RESOLVED by fingerprint absence, never by a scan that could not see it; formal Gate 1 next | Phase 6 · Review 4 |
+| 9 | Verify no new issues were introduced | ◐ partly — NEW findings reported per rescan (demo v2); formal Gate 2 next | Phase 6 · Review 4 |
+| 10 | Verification mechanism and dashboard | ◐ partly — lifecycle + API today; dashboard next | Phase 7 · Review 5 |
+| 11 | Test on OWASP Top 10 cases and vulnerable web apps | ✅ done — own fixture (10 CWEs, 7 OWASP categories) + vulpy | Phase 2–3; full evaluation Phase 8 |
+| 12 | Maintain on GitHub with regular check-ins | ◐ partly — private repo, per-phase commits | ongoing |
+
+### Prepared answers
+
+* **"Where is the prompt assistant?"** — "We built the judge before the contestant. The LLM never decides
+  whether a fix worked, so the independent verification had to exist first; without it there is no way
+  to compare prompting strategies. Every finding record already carries what a prompt needs — CWE, OWASP,
+  severity, path, line, a redacted snippet and a stable fingerprint. Phase 5 consumes it at Review 4:
+  strategies S0–S8, the prompt linter, untrusted-code delimiting and a local model."
+* **"Isn't this just a scanner wrapper?"** — "The scanners produce the evidence. What we built is
+  everything around it: one finding shape across four tools, CWE corrections where a tool mis-tags
+  (CWE-704 → 89, 489 → 94, 259 → 798), an identity that survives refactoring and `# nosec`, the
+  REGRESSION and UNVERIFIED states, and stopping the scanned code from silencing its own scanners. No
+  scanner tracks a finding across commits. Testing found six defects that reading would not have."
+* **"Why is there no UI?"** — "The dashboard is Phase 7, at Review 5. The API already exposes everything
+  it will show" — then show `/docs` (demo step 7).
+* **"Your commits are all from 8 October."** — "The repository was created on 8 October. Each phase was
+  committed as it was completed and tested, with the Review 2 material as the first commit. From Phase 5,
+  commits are continuous and each member commits under their own account."
+* **"What will Review 4 show?"** — "One finding taken end to end: generated prompt with a chosen strategy →
+  linted → fix applied in a throwaway worktree → rescan → three gates → `VERIFIED_RESOLVED` or
+  `FIX_REJECTED` with the reason recorded."
+
 ## The demo, step by step
 
 ### 1 · Detection against ground truth (slides 5–6)
@@ -197,6 +244,8 @@ python -m pytest -q
 * **"What is precision 22/24?"** — the 2 Bandit import advisories; suppressed with a reason, never deleted
   (demo step 4).
 * **"What did you learn?"** — slide 10. Tell the `taskkill` story: our own fix introduced a new finding.
+* **Progress questions** — "where is the AI?", "just a scanner wrapper?", "no UI?", "commit history?" —
+  see *Progress — what a strict panel will ask* above.
 
 ## If something fails live
 
