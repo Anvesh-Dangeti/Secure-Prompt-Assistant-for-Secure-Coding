@@ -73,6 +73,29 @@ class Settings(BaseSettings):
     # Pinned Semgrep ruleset snapshot (see scripts/fetch_semgrep_rules.py).
     semgrep_rules: Path = PROJECT_ROOT / "rules" / "vendor" / "semgrep_p_python.yaml"
 
+    # ---- AI layer: data minimisation --------------------------------------
+    # Lines of code around a finding that may leave the process. A function
+    # no longer than max_context_lines is sent whole; anything longer is
+    # clipped to context_radius lines either side of the finding.
+    context_radius: int = Field(10, ge=1, le=50)
+    max_context_lines: int = Field(40, ge=5, le=200)
+    max_context_file_bytes: int = Field(1 * MB, ge=1024)
+    # Prompts above this estimated size are flagged by the linter (C1).
+    prompt_token_budget: int = Field(1500, ge=200, le=32000)
+
+    # ---- AI layer: providers ----------------------------------------------
+    # "template" needs no model at all (developer mode default). "ollama" is
+    # the local model used for lab-mode experiments.
+    llm_provider: str = "template"
+    # Loopback only: source context must never leave this machine by
+    # misconfiguration. A hosted provider would be a separate, explicit class.
+    ollama_url: str = "http://127.0.0.1:11434"
+    ollama_model: str = "qwen2.5-coder:7b-instruct"
+    llm_timeout_seconds: int = Field(180, ge=5, le=1800)
+    llm_seed: int = 42
+    llm_num_ctx: int = Field(4096, ge=1024, le=32768)
+    max_llm_response_bytes: int = Field(256 * 1024, ge=1024)
+
     @field_validator("allowed_git_hosts", mode="before")
     @classmethod
     def _split_hosts(cls, value: object) -> object:
@@ -90,6 +113,14 @@ class Settings(BaseSettings):
         if level not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
             raise ValueError(f"invalid log level: {value}")
         return level
+
+    @field_validator("llm_provider")
+    @classmethod
+    def _known_provider(cls, value: str) -> str:
+        name = value.strip().lower()
+        if name not in {"template", "ollama"}:
+            raise ValueError(f"unknown LLM provider: {value}")
+        return name
 
     @field_validator("scratch_root", "semgrep_rules", mode="after")
     @classmethod

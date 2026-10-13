@@ -27,13 +27,14 @@ SQLAlchemy==2.1.4
 # ---- data files (mapping tables, ground truth) -- always yaml.safe_load ------
 PyYAML==6.0.3
 
+# ---- AI layer: local model server (Ollama) over HTTP ----------------------
+httpx==0.28.1                   # also used by FastAPI's TestClient
+
 # ---- tests -------------------------------------------------------------------
 pytest==9.1.1
-httpx==0.28.1                   # FastAPI TestClient
 
 # ---- review deck generator (scripts/build_review*_deck.py) -------------------
 python-pptx==1.0.2
 
 # ---- later phases (installed when the phase begins) -------------------------
 # Phase 7: streamlit
-# Phase 5: LLM provider HTTP calls reuse httpx
