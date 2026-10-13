@@ -5,6 +5,7 @@
     python -m app.cli scan-zip fixtures/flask_vuln_app --project demo
     python -m app.cli scan-url https://github.com/<owner>/<repo> --project name
     python -m app.cli history --project demo
+    python -m app.cli prompt <id> --source <checkout>   # AI layer: see app/cli_ai.py
 
 ``scan-dir`` is a developer command for *trusted local* directories such as the
 fixtures: the tree is copied into scratch (symlinks skipped) and scanned there,
@@ -24,6 +25,7 @@ from pathlib import Path
 
 from sqlalchemy import select
 
+from app import cli_ai
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.scratch import scratch_dir
@@ -270,6 +272,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("tracked_id", type=int)
     p.add_argument("--reason", required=True)
     p.set_defaults(func=cmd_suppress)
+    cli_ai.register(sub)
     return parser
 
 

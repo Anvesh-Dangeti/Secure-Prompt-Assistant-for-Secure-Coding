@@ -1,0 +1,206 @@
+# Per-CWE remediation guidance for the AI layer: one table, shared by the
+# Explainer, the prompt strategies and the Prompt Security Linter, so a prompt
+# and the check that validates it can never disagree about what a fix needs.
+#
+# Fields (all strings except vocabulary):
+#   name        short weakness name used in the prompt's opening sentence
+#   explain     what flows where, in THIS code           (Explainer)
+#   risk        why it matters                          (Explainer)
+#   directive   HOW to fix it -- the handling directive   (S2/S7, linter A3)
+#   guard       WHEN the operation may proceed          (S7, linter A2)
+#   mitre       mitigation paraphrased from MITRE CWE "Potential Mitigations" (S2)
+#   rule        finding-independent standing rule       (S8 rules file)
+#   aliases     other ways people name the weakness (linter A5: "SQLi", "debug mode")
+#   vocabulary  terms of which at least one must appear in a prompt's
+#               instructions for its handling directive to count (linter A3).
+#               Matched case-insensitively as substrings, so "parameteris"
+#               covers parameterise/parameterised.
+#
+# Slots filled from the extracted context: {source} {origin} {sink} {target}
+# {base} {symbol} {package} {version} {fixed} {vulns} {cwe}. A missing slot is
+# filled with a neutral phrase, never left as a raw brace.
+#
+# Loaded with yaml.safe_load only. Extending coverage = adding an entry here.
+
+version: 1
+
+guidance:
+  CWE-89:
+    aliases: [sqli, sql injection]
+    name: SQL injection
+    explain: "`{source}` comes from {origin} and is formatted into the SQL text passed to `{sink}`."
+    risk: A crafted value can change the structure of the query and read, alter or delete data.
+    directive: >-
+      Use a parameterised query: put a placeholder in the SQL text and pass `{source}` separately as a
+      bound parameter of `{sink}`.
+    guard: The query may run only after `{source}` is bound as a parameter; never build SQL text from it.
+    mitre: >-
+      Use structured mechanisms that separate data from code, such as prepared statements or
+      parameterised queries; do not build queries by string concatenation or formatting.
+    rule: >-
+      SQL: always pass values as bound parameters of a parameterised query; never format or concatenate
+      them into SQL text.
+    vocabulary: [parameteris, parameteriz, placeholder, bound parameter, bind parameter, prepared statement]
+
+  CWE-78:
+    aliases: [command injection, shell injection]
+    name: OS command injection
+    explain: "`{source}` comes from {origin} and is concatenated into a command that `{sink}` runs through a shell."
+    risk: Shell metacharacters in the value let an attacker run arbitrary commands on the server.
+    directive: >-
+      Call the program with an argument list and shell=False, passing `{source}` as a single argument, and
+      reject values that do not match a strict allowlist pattern.
+    guard: Run the command only if `{source}` has passed the allowlist check; never pass it through a shell.
+    mitre: >-
+      Avoid invoking a command shell; call the program directly with separate arguments, and validate
+      input against a strict allowlist of permitted values.
+    rule: >-
+      Processes: call programs with an argument list and shell=False; never build command strings from
+      input; validate arguments against an allowlist.
+    vocabulary: ["shell=false", argument list, list of arguments, without a shell, allowlist, allow-list]
+
+  CWE-79:
+    aliases: [xss, cross-site scripting, cross site scripting]
+    name: cross-site scripting
+    explain: "`{source}` comes from {origin} and is inserted into an HTML response without escaping."
+    risk: >-
+      Injected markup or script runs in the victim's browser, where it can steal sessions or act on the
+      user's behalf.
+    directive: >-
+      HTML-escape `{source}` before it is placed in the response, for example with markupsafe.escape or a
+      template with autoescaping.
+    guard: Insert `{source}` into the HTML only after it has been escaped.
+    mitre: >-
+      Encode all untrusted output for the context it is placed in (HTML entity encoding for HTML bodies),
+      preferably through a library or templating engine that escapes automatically.
+    rule: >-
+      HTML output: escape every untrusted value for its output context (markupsafe.escape or
+      autoescaping templates); never build HTML with string formatting.
+    vocabulary: [escape, autoescap, markupsafe, output encoding, html entit]
+
+  CWE-798:
+    aliases: [hard-coded credential, hardcoded credential, hard-coded secret, hardcoded secret, hard-coded password, hardcoded password]
+    name: hard-coded credential
+    explain: "`{target}` holds a credential written directly in the source code."
+    risk: >-
+      Anyone with access to the code or its history can use the credential, and it cannot be rotated
+      without a code change.
+    directive: >-
+      Remove the literal value and load `{target}` at runtime from an environment variable or a secret
+      manager.
+    guard: >-
+      Use the credential only if it was supplied at runtime; fail with a clear error when it is missing
+      instead of falling back to a default.
+    mitre: >-
+      Do not hard-code credentials; keep them outside the code in a protected configuration store or the
+      environment and read them at runtime.
+    rule: >-
+      Secrets: never hard-code credentials or keys; read them at runtime from environment variables or a
+      secret manager and fail closed when absent.
+    vocabulary: [environment variable, os.environ, getenv, secret manager, secrets manager, vault]
+
+  CWE-22:
+    aliases: [path traversal, directory traversal]
+    name: path traversal
+    explain: "`{source}` comes from {origin} and is joined into a filesystem path that `{sink}` opens."
+    risk: Sequences such as ../ let an attacker read files outside `{base}`.
+    directive: >-
+      Resolve the joined path and refuse the request unless the resolved path stays inside `{base}`, for
+      example with os.path.realpath and os.path.commonpath.
+    guard: Open the file only if the resolved path is inside `{base}`; otherwise return an error.
+    mitre: >-
+      Canonicalise the path and verify that it stays inside the intended directory before use; validate
+      file names against an allowlist.
+    rule: >-
+      File paths: canonicalise any path built from input and refuse it unless it stays inside the intended
+      base directory.
+    vocabulary: [realpath, resolve, commonpath, is_relative_to, safe_join, canonical]
+
+  CWE-327:
+    aliases: [weak hash, insecure hash, broken hash, weak crypto, md5, sha1]
+    name: weak password hash
+    explain: "`{sink}` is a fast, unsalted hash, so it is unsuitable for protecting `{source}`."
+    risk: Leaked hashes can be cracked quickly with precomputed tables or GPUs.
+    directive: >-
+      Hash `{source}` with a slow, salted password-hashing function such as hashlib.scrypt or
+      PBKDF2-HMAC-SHA256 with a random per-password salt.
+    guard: Store or compare a password only after it has been through the salted password-hashing function.
+    mitre: >-
+      Use a strong, current algorithm designed for the purpose; for passwords use an adaptive, salted
+      key-derivation function.
+    rule: >-
+      Passwords: hash with a salted, adaptive key-derivation function (scrypt, PBKDF2, bcrypt, argon2);
+      never MD5, SHA-1 or an unsalted hash.
+    vocabulary: [scrypt, pbkdf2, bcrypt, argon2, salt]
+
+  CWE-330:
+    aliases: [insecure random, weak random, predictable token, insufficient randomness]
+    name: insufficiently random values
+    explain: "`{sink}` generates a security-sensitive value but is not a cryptographically secure generator."
+    risk: An attacker who observes a few outputs can predict the next ones, for example password-reset tokens.
+    directive: >-
+      Generate the value with the secrets module (for example secrets.token_urlsafe or
+      secrets.randbelow) instead of `{sink}`.
+    guard: Issue the value only when it comes from a cryptographically secure generator.
+    mitre: Use a cryptographically secure pseudo-random number generator for security-sensitive values.
+    rule: >-
+      Randomness: generate tokens, keys and nonces only with the secrets module or os.urandom; never the
+      random module.
+    vocabulary: [secrets module, secrets., cryptographically secure, csprng, os.urandom, systemrandom]
+
+  CWE-502:
+    aliases: [insecure deserialization, insecure deserialisation, unsafe deserialization, unsafe deserialisation, pickle]
+    name: deserialisation of untrusted data
+    explain: "`{source}` comes from {origin} and is passed to `{sink}`, which can execute code while deserialising."
+    risk: A crafted payload runs arbitrary code on the server during deserialisation.
+    directive: Do not unpickle client data; parse `{source}` as JSON with json.loads and validate the expected fields.
+    guard: Accept the data only after it has been parsed as plain JSON and its fields validated.
+    mitre: >-
+      Do not deserialise untrusted data with formats that can instantiate arbitrary objects; use a
+      data-only format and validate it.
+    rule: >-
+      Deserialisation: never unpickle or unmarshal untrusted data; use a data-only format such as JSON and
+      validate it.
+    vocabulary: [json, data-only, do not unpickle, never unpickle, safe_load]
+
+  CWE-94:
+    aliases: [debug mode, "debug=true"]
+    name: debug mode enabled
+    explain: "`{sink}` is called with debug mode switched on in the code."
+    risk: >-
+      Flask's interactive debugger lets anyone who reaches an error page execute arbitrary Python code on
+      the server.
+    directive: >-
+      Do not enable debug mode in code; read the setting from configuration, such as an environment
+      variable, that defaults to off.
+    guard: Enable debugging only when it is explicitly configured for local development, never by default.
+    mitre: Remove or disable debug functionality before deployment; never expose an interactive debugger.
+    rule: "Debug: never enable debug mode in code; take it from configuration that defaults to off."
+    vocabulary: ["debug=false", defaults to off, default to off, disable debug, environment variable]
+
+  CWE-1395:
+    aliases: [vulnerable dependency, outdated dependency, vulnerable package]
+    name: vulnerable dependency
+    explain: "`{package}` is pinned to version {version}, which has known vulnerabilities ({vulns})."
+    risk: Published exploits for those vulnerabilities apply to the application through this dependency.
+    directive: Upgrade `{package}` to {fixed} or later and keep the version pinned exactly.
+    guard: Deploy only after `{package}` is at a version that fixes {vulns}.
+    mitre: >-
+      Keep third-party components up to date and upgrade or remove components with known
+      vulnerabilities.
+    rule: >-
+      Dependencies: pin every dependency to a version with no known vulnerabilities and upgrade when an
+      advisory appears.
+    vocabulary: [upgrade, update to, bump]
+
+# Used for any CWE without an entry above. It has no vocabulary, so the linter
+# reports the handling directive as unverifiable rather than passing it.
+generic:
+  name: "{cwe} weakness"
+  explain: The analyser reported a weakness in the marked code.
+  risk: The reported weakness may be exploitable.
+  directive: Apply the standard mitigation for {cwe} to the marked code.
+  guard: Keep the vulnerable operation unreachable until the mitigation is in place.
+  mitre: Apply the mitigations that MITRE's CWE catalogue lists for {cwe}.
+  rule: ""
+  vocabulary: []

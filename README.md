@@ -13,9 +13,17 @@ Anvesh Dangeti (EM26MTECH14009) · Dhananjay Kumar (CS26MTECH13007) · Muday Sai
 
 Scan a Python repository with four independent open-source security tools, normalise and classify every
 finding (CWE / OWASP / CVE), and track each finding's identity across commits as
-`NEW → STILL_OPEN → RESOLVED → REGRESSION`, with human-marked `SUPPRESSED` false positives. Later phases
-generate an AI remediation prompt per finding using a *selectable, measured* prompting strategy, then
-independently re-scan to verify the fix against three gates.
+`NEW → STILL_OPEN → RESOLVED → REGRESSION`, with human-marked `SUPPRESSED` false positives. For each finding
+it builds a remediation prompt with a *selectable, measured* prompting strategy (S0–S8), checks that prompt
+with a **Prompt Security Linter**, and later re-scans independently to verify the fix against three gates.
+
+It runs in two modes:
+
+| | Developer mode | Lab mode |
+|---|---|---|
+| Who writes the fix | **your own coding assistant** (Copilot, Cursor, Codex, …) | a local open model (Ollama), for experiments |
+| Model needed by this tool | none — explanations and prompts come from templates | `qwen2.5-coder:7b-instruct` on this machine |
+| What it is for | getting a better prompt to your assistant, then verifying its fix | measuring which strategy yields verified fixes |
 
 **The LLM never decides whether a vulnerability is fixed.** Only an independent re-scan does — and a scan
 that could not examine a finding's file or package can never mark it resolved.
@@ -34,11 +42,12 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 2 | Scanners — Semgrep · Bandit · Gitleaks · pip-audit, normalisation, mapping, fingerprints | ✅ |
 | 3 | Repository — SSRF-safe clone, zip-slip-safe upload, persisted scans, API | ✅ |
 | 4 | Lifecycle — state machine, tracking, suppression, history | ✅ |
-| 5–6 | AI prompt assistant · triple-gate verification | ⬜ Review 4 |
+| 5 | AI prompt assistant — context + entities, explainer, strategies S0–S8, Prompt Security Linter, providers | ✅ |
+| 6 | Triple-gate verification — developer-mode `verify`, lab-mode scratch-copy apply | ⬜ Review 4 |
 | 7–8 | Dashboard · evaluation (ESR) | ⬜ Review 5 |
 | 9–10 | Hardening · final | ⬜ Review 6 |
 
-On the seeded fixture: **10/10 weaknesses detected**, precision 22/24, 278 automated tests.
+On the seeded fixture: **10/10 weaknesses detected**, precision 22/24, 485 automated tests.
 
 ---
 
@@ -69,6 +78,16 @@ python -m app.cli history --project demo
 
 python scripts/demo_lifecycle.py          # six scripted commits exercising every lifecycle state
 
+# developer mode -- no model needed
+python -m app.cli strategies                                        # S0-S8
+python -m app.cli explain <id> --source <your checkout>
+python -m app.cli prompt <id> --source <your checkout> [--strategy S7] [--out prompt.txt]
+python -m app.cli lint-prompt my_prompt.txt [--finding <id> --source <checkout>] [--fix]
+
+# lab mode -- local model, proposals are never applied by this command
+python -m app.cli providers
+python -m app.cli propose <id> --source <checkout> --strategy S5
+
 python -m uvicorn app.main:app --host 127.0.0.1   # API; docs at /docs, key via X-API-Key
 ```
 
@@ -92,6 +111,10 @@ python -m pytest -m "not network"   # offline
 | Code under scan | `nosec` / `nosemgrep` / `gitleaks:allow` ignored; in-repo scanner config removed from the scratch copy; pip-audit never installs dependencies |
 | Secrets | redacted before storage, logging and fingerprinting |
 | Verification | a finding is never resolved by a scan that could not see it (scanner failure, unparseable file, unpinned dependency → `UNVERIFIED`) |
+| Context to a model | only the flagged function or ±10 lines; comments and docstrings removed; redacted; path confined to the checkout |
+| Prompt injection | repository code wrapped in random-nonce delimiters with an inert-data instruction; instruction-like text flagged |
+| Model server | loopback only; proxies and redirects ignored; bounded response; temperature 0, fixed seed |
+| Model output | schema-validated (`code`, single-statement `imports`, `summary`); anything else is a rejected fix, never repaired |
 | API | key on every route, fails closed when unset; body-size cap before multipart parsing; no stack traces returned |
 
 ---
