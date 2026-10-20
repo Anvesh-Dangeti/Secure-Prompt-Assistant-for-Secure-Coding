@@ -37,6 +37,18 @@ LIFECYCLE = {
     "v6-gitleaks-back": ((0, 24, 1, 0, 2, 0), "COMPLETED"),
 }
 
+# ---- eight-commit developer-mode verification scenario (asserted) -----------
+# label -> (verdict, first gate that failed or lacked evidence, findings in the weakness)
+VERIFICATION = {
+    "v2-stub-ping": ("FIX_REJECTED", "3a", 4),
+    "v3-fix-ping": ("VERIFIED_RESOLVED", None, 4),
+    "v4-churn-sql": ("FIX_REJECTED", "1", 3),
+    "v5-fix-sql-new-route": ("FIX_REJECTED", "2", 2),
+    "v6-remove-route": ("VERIFIED_RESOLVED", None, 2),
+    "v7-token-gitleaks-down": ("UNVERIFIED", "1", 2),
+    "v8-gitleaks-back": ("VERIFIED_RESOLVED", None, 2),
+}
+
 # ---- snapshots (recorded 8 Oct 2026, not asserted) -------------------------
 LIVE_VULPY = {
     "url": "https://github.com/fportantier/vulpy",
