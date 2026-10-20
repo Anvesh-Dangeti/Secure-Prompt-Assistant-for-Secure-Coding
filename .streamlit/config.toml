@@ -1,0 +1,27 @@
+# Dashboard server configuration (read when `streamlit run` starts from the project root).
+#
+# The dashboard shows findings from scanned, untrusted code and can trigger
+# scans of local checkouts, so its server is locked down. The app itself also
+# refuses to render unless server.address is loopback (dashboard/auth.py).
+
+[server]
+address = "127.0.0.1"          # loopback only; Streamlit otherwise listens on every interface
+port = 8501
+headless = true                # do not open a browser from the server process
+enableXsrfProtection = true    # forms and widgets need a valid XSRF token
+enableCORS = true              # keep cross-origin protection on
+enableStaticServing = false    # no static file serving
+fileWatcherType = "none"       # no auto-reload of code from disk
+runOnSave = false
+maxUploadSize = 50             # MB; matches SPA_MAX_UPLOAD_BYTES (no uploader is used today)
+
+[browser]
+gatherUsageStats = false       # no telemetry
+serverAddress = "127.0.0.1"
+
+[client]
+showErrorDetails = "none"      # exceptions are logged on the console, never shown with tracebacks
+toolbarMode = "minimal"
+
+[runner]
+magicEnabled = false           # no implicit st.write of bare expressions (which would render Markdown)

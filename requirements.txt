@@ -36,5 +36,7 @@ pytest==9.1.1
 # ---- review deck generator (scripts/build_review*_deck.py) -------------------
 python-pptx==1.0.2
 
-# ---- later phases (installed when the phase begins) -------------------------
-# Phase 7: streamlit
+# ---- dashboard (Phase 7) -------------------------------------------------------
+# Local, loopback-only UI over the same services as the CLI (dashboard/).
+# Its transitive dependencies are audited with pip-audit after every change.
+streamlit==1.65.0

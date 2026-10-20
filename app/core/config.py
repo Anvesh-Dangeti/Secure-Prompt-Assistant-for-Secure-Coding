@@ -103,6 +103,10 @@ class Settings(BaseSettings):
     fixture_python: Path | None = None
     fixture_test_timeout_seconds: int = Field(60, ge=5, le=600)
 
+    # ---- dashboard -------------------------------------------------------------
+    # When set, the dashboard only accepts checkout paths inside this directory.
+    dashboard_source_root: Path | None = None
+
     @field_validator("allowed_git_hosts", mode="before")
     @classmethod
     def _split_hosts(cls, value: object) -> object:

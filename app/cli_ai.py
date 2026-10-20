@@ -23,10 +23,10 @@ from pathlib import Path
 from app.ai.context import ContextError, FindingContext
 from app.ai.conversation import run_conversation
 from app.ai.explainer import explain
-from app.ai.linter import RULES, apply_fixes, expectation_for, lint, unbound_expectation
+from app.ai.linter import RULES, apply_fixes, lint, unbound_expectation
 from app.ai.prompt_builder import PromptRejected, build_prompt
 from app.ai.providers import OllamaProvider, ProviderError, get_provider
-from app.ai.service import FindingNotFound, context_for_tracked
+from app.ai.service import FindingNotFound, bound_expectation, context_for_tracked
 from app.ai.strategies import DEFAULT_STRATEGY, STRATEGIES
 from app.db.session import init_db, session_scope
 
@@ -121,8 +121,7 @@ def cmd_lint_prompt(args: argparse.Namespace) -> int:
         ctx = _context(args)
         if ctx is None:
             return 2
-        canonical = build_prompt(ctx, DEFAULT_STRATEGY).messages[0]
-        expectation = expectation_for(ctx, canonical=canonical)
+        expectation = bound_expectation(ctx)
     report = lint(raw, expectation)
     if args.fix:
         fixed = apply_fixes(raw, report, expectation or unbound_expectation())
