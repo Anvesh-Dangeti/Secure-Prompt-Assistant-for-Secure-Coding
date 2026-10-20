@@ -96,6 +96,13 @@ class Settings(BaseSettings):
     llm_num_ctx: int = Field(4096, ge=1024, le=32768)
     max_llm_response_bytes: int = Field(256 * 1024, ge=1024)
 
+    # ---- lab mode: verification gate 3b ------------------------------------
+    # The interpreter that runs a fixture's behaviour tests against a patched
+    # scratch copy. It is a separate environment (scripts/install_fixture_env.py):
+    # model-written code never runs inside the application's own interpreter.
+    fixture_python: Path | None = None
+    fixture_test_timeout_seconds: int = Field(60, ge=5, le=600)
+
     @field_validator("allowed_git_hosts", mode="before")
     @classmethod
     def _split_hosts(cls, value: object) -> object:

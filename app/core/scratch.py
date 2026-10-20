@@ -15,7 +15,7 @@ import os
 import shutil
 import stat
 import tempfile
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
@@ -59,3 +59,16 @@ def scratch_dir(prefix: str = "spa-") -> Iterator[Path]:
         except OSError:
             # Never mask the original exception; record the leak instead.
             log.error("scratch cleanup failed", extra={"path": str(path)})
+
+
+def copy_trusted_tree(source: Path, dest: Path, exclude: Iterable[str] = ()) -> None:
+    """Copy a *trusted local* directory (a fixture, a developer's own checkout) into scratch.
+
+    Directories named in ``exclude`` are skipped and every symlink is removed
+    from the copy, so nothing that is later scanned, patched or tested in
+    scratch can point back out of it.
+    """
+    shutil.copytree(source, dest, symlinks=True, ignore=shutil.ignore_patterns(*exclude))
+    for path in list(dest.rglob("*")):
+        if path.is_symlink():
+            path.unlink()  # never follow links out of the tree

@@ -1,0 +1,12 @@
+{
+  "note": "B608 / get_user: fixed, but the @app.route decorator is lost -- expected FIX_REJECTED at gate 3a",
+  "turns": [
+    "Here is a first attempt.",
+    "I reviewed the change against the weakness, new weaknesses and preserved behaviour."
+  ],
+  "final": {
+    "code": "def get_user():\n    user_id = request.args.get(\"id\")\n    conn = sqlite3.connect(\"app.db\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE id = ?\", (user_id,))\n    return {\"rows\": cursor.fetchall()}",
+    "imports": [],
+    "summary": "Parameterised the query."
+  }
+}

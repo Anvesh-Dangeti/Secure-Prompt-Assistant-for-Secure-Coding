@@ -15,7 +15,8 @@ Scan a Python repository with four independent open-source security tools, norma
 finding (CWE / OWASP / CVE), and track each finding's identity across commits as
 `NEW → STILL_OPEN → RESOLVED → REGRESSION`, with human-marked `SUPPRESSED` false positives. For each finding
 it builds a remediation prompt with a *selectable, measured* prompting strategy (S0–S8), checks that prompt
-with a **Prompt Security Linter**, and later re-scans independently to verify the fix against three gates.
+with a **Prompt Security Linter**, and then re-scans independently to verify the fix against three gates:
+the weakness is gone (every scanner agrees), nothing new was introduced, and the function still works.
 
 It runs in two modes:
 
@@ -43,11 +44,12 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 3 | Repository — SSRF-safe clone, zip-slip-safe upload, persisted scans, API | ✅ |
 | 4 | Lifecycle — state machine, tracking, suppression, history | ✅ |
 | 5 | AI prompt assistant — context + entities, explainer, strategies S0–S8, Prompt Security Linter, providers | ✅ |
-| 6 | Triple-gate verification — developer-mode `verify`, lab-mode scratch-copy apply | ⬜ Review 4 |
+| 6 | Triple-gate verification — developer-mode `verify` (gates 1, 2, 3a), lab-mode scratch-copy apply (+ 3b) | ✅ |
 | 7–8 | Dashboard · evaluation (ESR) | ⬜ Review 5 |
 | 9–10 | Hardening · final | ⬜ Review 6 |
 
-On the seeded fixture: **10/10 weaknesses detected**, precision 22/24, 485 automated tests.
+On the seeded fixture: **10/10 weaknesses detected**, precision 22/24; an eight-commit verification scenario
+covers every verdict; 596 automated tests.
 
 ---
 
@@ -59,6 +61,7 @@ pip install -r requirements.txt
 python scripts/install_scanners.py                       # Semgrep, Bandit, pip-audit in isolated venvs
 winget install --id Gitleaks.Gitleaks --version 8.30.1 --exact   # or a release binary
 python scripts/fetch_semgrep_rules.py                    # pinned ruleset snapshot (rules/vendor/)
+python scripts/install_fixture_env.py                    # lab mode only: interpreter for gate 3b's tests
 cp .env.example .env                                     # set SPA_API_KEY (and SPA_GITLEAKS_BIN if needed)
 python -m app.cli scanners                               # all four should be available
 ```
@@ -83,19 +86,39 @@ python -m app.cli strategies                                        # S0-S8
 python -m app.cli explain <id> --source <your checkout>
 python -m app.cli prompt <id> --source <your checkout> [--strategy S7] [--out prompt.txt]
 python -m app.cli lint-prompt my_prompt.txt [--finding <id> --source <checkout>] [--fix]
+#   ... paste the prompt into your assistant, let it edit, commit ...
+python -m app.cli verify <id> --source <your checkout>      # rescan, then gates 1, 2, 3a (--rescan for git projects)
+python -m app.cli verifications <id>                        # remediation history
 
-# lab mode -- local model, proposals are never applied by this command
+python scripts/demo_verify.py             # eight scripted commits exercising every verification verdict
+
+# lab mode -- local model writes the fix into a scratch copy; gates 1, 2, 3a, then 3b (fixture tests)
 python -m app.cli providers
-python -m app.cli propose <id> --source <checkout> --strategy S5
+python -m app.cli propose <id> --source <checkout> --strategy S5               # proposal only, nothing applied
+python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --strategy S7
+python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --replay evaluation/replays/sqli_good.json
 
 python -m uvicorn app.main:app --host 127.0.0.1   # API; docs at /docs, key via X-API-Key
 ```
+
+## Verification
+
+| Gate | Passes when | Mode |
+|---|---|---|
+| 1 target resolved | every scanner's finding of the weakness (same CWE, same function) is verifiably gone; the same rule re-reported on the edited code counts as still present | both |
+| 2 no new findings | nothing introduced at the weakness's severity or above (lower: warning); a failed scanner makes it `UNVERIFIED` | both |
+| 3a function preserved | same name, parameters and decorators; not a stub; no newly undefined names (static, from scan-time symbol snapshots) | both |
+| 3b fixture tests | `fixtures/<name>_tests/` pass on the patched copy (run only after 1, 2 and 3a pass) | lab |
+
+Verdict: `VERIFIED_RESOLVED` only if every gate passes; `FIX_REJECTED` with the first failing gate;
+`UNVERIFIED` when evidence is missing. Developer mode never executes repository code.
 
 ## Tests
 
 ```bash
 python -m pytest                    # everything (scanner tests skip if a scanner is missing)
 python -m pytest -m "not network"   # offline
+python -m pytest -m "not scanners"  # fast: no real scanner runs
 ```
 
 ---
@@ -115,6 +138,8 @@ python -m pytest -m "not network"   # offline
 | Prompt injection | repository code wrapped in random-nonce delimiters with an inert-data instruction; instruction-like text flagged |
 | Model server | loopback only; proxies and redirects ignored; bounded response; temperature 0, fixed seed |
 | Model output | schema-validated (`code`, single-statement `imports`, `summary`); anything else is a rejected fix, never repaired |
+| Applying a fix (lab) | whole-window text splice into a scratch copy, confined to the flagged file; never committed, never applied to your checkout |
+| Running a fix (lab, gate 3b) | only after gates 1, 2, 3a pass; separate interpreter; `python -P`, pinned pytest config; allowlisted environment; timeout; CLI only, never over the API |
 | API | key on every route, fails closed when unset; body-size cap before multipart parsing; no stack traces returned |
 
 ---
@@ -134,5 +159,7 @@ python -m pytest -m "not network"   # offline
 ## Safety note
 
 `fixtures/` contains **deliberately vulnerable code**. It is isolated, never imported by the
-application, and exists only to give the scanners something to find. Do not run it, deploy it, or
-copy from it. The credentials in it are fabricated.
+application, and exists only to give the scanners something to find. Its behaviour tests
+(`fixtures/flask_vuln_app_tests/`) import it only in lab mode, in a scratch copy, through Flask's test
+client, with every process call faked. Do not run it as a server, deploy it, or copy from it. The
+credentials in it are fabricated.

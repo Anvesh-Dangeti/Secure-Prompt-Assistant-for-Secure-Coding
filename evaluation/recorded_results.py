@@ -49,6 +49,18 @@ VERIFICATION = {
     "v8-gitleaks-back": ("VERIFIED_RESOLVED", None, 2),
 }
 
+# ---- lab mode: recorded model answers replayed through all four gates (asserted)
+# evaluation/replays/<name>.json -> (rule of the finding, verdict, first gate that failed)
+LAB_REPLAYS = {
+    "sqli_good": ("B608", "VERIFIED_RESOLVED", None),
+    "sqli_stub": ("B608", "FIX_REJECTED", "3a"),
+    "sqli_drops_route": ("B608", "FIX_REJECTED", "3a"),
+    "sqli_wrong_behaviour": ("B608", "FIX_REJECTED", "3b"),     # only the behaviour tests can see it
+    "cmd_quoted_shell": ("B602", "FIX_REJECTED", "1"),
+    "cmd_good": ("B602", "VERIFIED_RESOLVED", None),
+}
+FIXTURE_BEHAVIOUR_TESTS = 10   # fixtures/flask_vuln_app_tests, all passing on the unmodified fixture
+
 # ---- snapshots (recorded 8 Oct 2026, not asserted) -------------------------
 LIVE_VULPY = {
     "url": "https://github.com/fportantier/vulpy",

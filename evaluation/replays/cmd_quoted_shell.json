@@ -1,0 +1,14 @@
+{
+  "note": "B602 / ping_host: shlex.quote but still shell=True -- expected FIX_REJECTED at gate 1",
+  "turns": [
+    "Here is a first attempt.",
+    "I reviewed the change against the weakness, new weaknesses and preserved behaviour."
+  ],
+  "final": {
+    "code": "@app.route(\"/ping\")\ndef ping_host():\n    host = request.args.get(\"host\")\n    output = subprocess.check_output(\"ping -c 1 \" + shlex.quote(host), shell=True)\n    return output",
+    "imports": [
+      "import shlex"
+    ],
+    "summary": "Quoted the host before passing it to the shell."
+  }
+}

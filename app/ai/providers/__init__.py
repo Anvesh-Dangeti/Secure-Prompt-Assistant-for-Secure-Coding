@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from app.ai.providers.base import ChatMessage, Completion, LLMProvider, ProviderError
 from app.ai.providers.ollama import OllamaProvider
-from app.ai.providers.scripted import ScriptedProvider
+from app.ai.providers.scripted import ReplayProvider, ScriptedProvider
 from app.ai.providers.template import TemplateProvider
 from app.core.config import get_settings
 
-__all__ = ["ChatMessage", "Completion", "LLMProvider", "OllamaProvider", "ProviderError",
+__all__ = ["ChatMessage", "Completion", "LLMProvider", "OllamaProvider", "ProviderError", "ReplayProvider",
            "ScriptedProvider", "TemplateProvider", "get_provider"]
 
 

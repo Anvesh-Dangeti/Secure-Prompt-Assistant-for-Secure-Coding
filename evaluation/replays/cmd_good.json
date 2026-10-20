@@ -1,0 +1,12 @@
+{
+  "note": "B602 / ping_host: argument list, no shell -- expected VERIFIED_RESOLVED (Bandit LOW advisories as warnings)",
+  "turns": [
+    "Here is a first attempt.",
+    "I reviewed the change against the weakness, new weaknesses and preserved behaviour."
+  ],
+  "final": {
+    "code": "@app.route(\"/ping\")\ndef ping_host():\n    host = request.args.get(\"host\")\n    output = subprocess.run([\"ping\", \"-c\", \"1\", \"--\", host], capture_output=True, check=False)\n    return output.stdout",
+    "imports": [],
+    "summary": "Passed the host as a separate argument without a shell."
+  }
+}
