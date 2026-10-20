@@ -15,6 +15,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.context import ContextError, FindingContext, extract_context
+from app.ai.linter import LintExpectation, expectation_for
+from app.ai.prompt_builder import build_prompt
+from app.ai.strategies import DEFAULT_STRATEGY
 from app.db.models import Finding, Scan, TrackedFinding
 from app.normalization.finding import NormalizedFinding
 
@@ -49,3 +52,13 @@ def context_for_tracked(session: Session, tracked_id: int, source_root: Path) ->
     if not source_root.is_dir():
         raise ContextError(f"source directory not found: {source_root}")
     return extract_context(finding_for_tracked(session, tracked_id), source_root)
+
+
+def bound_expectation(ctx: FindingContext) -> LintExpectation:
+    """What a developer-edited prompt for this finding is linted against.
+
+    The canonical S7 first message is the reference for the "no silent
+    shortening" rule (A7). One definition, so the CLI and the dashboard lint
+    an edited prompt identically.
+    """
+    return expectation_for(ctx, canonical=build_prompt(ctx, DEFAULT_STRATEGY).messages[0])

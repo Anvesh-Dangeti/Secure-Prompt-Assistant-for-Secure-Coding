@@ -45,11 +45,12 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 4 | Lifecycle — state machine, tracking, suppression, history | ✅ |
 | 5 | AI prompt assistant — context + entities, explainer, strategies S0–S8, Prompt Security Linter, providers | ✅ |
 | 6 | Triple-gate verification — developer-mode `verify` (gates 1, 2, 3a), lab-mode scratch-copy apply (+ 3b) | ✅ |
-| 7–8 | Dashboard · evaluation (ESR) | ⬜ Review 5 |
+| 7 | Dashboard — findings, prompt + copy, lint, rescan & verify, history (Streamlit, loopback only) | ✅ |
+| 8 | Evaluation — linter mutation sensitivity, S0–S8 ESR, weak vs linted prompts | ⬜ Review 5 |
 | 9–10 | Hardening · final | ⬜ Review 6 |
 
 On the seeded fixture: **10/10 weaknesses detected**, precision 22/24; an eight-commit verification scenario
-covers every verdict; 596 automated tests.
+covers every verdict; 621 automated tests.
 
 ---
 
@@ -99,7 +100,23 @@ python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --strategy S7
 python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --replay evaluation/replays/sqli_good.json
 
 python -m uvicorn app.main:app --host 127.0.0.1   # API; docs at /docs, key via X-API-Key
+python -m streamlit run dashboard/streamlit_app.py # dashboard at http://127.0.0.1:8501 (run from the project root)
 ```
+
+## Dashboard
+
+A local page over the same services as the CLI, for developer mode:
+
+| Page | What it shows / does |
+|---|---|
+| Overview | open findings by severity, lifecycle and verdict counts, open findings by OWASP category, findings per scan, what the last scan's scanners could see; scan a checkout |
+| Findings | filterable tracked findings; evidence, lifecycle events, verdicts; suppress a false positive (reason required) |
+| Prompt & lint | the remediation prompt for a finding with a copy button, its lint report, and a linter for your edited prompt with fix-its |
+| Verification | rescan your checkout and run gates 1, 2, 3a; per-gate history of every verification (lab runs read-only) |
+| Scan history | every scan with its source (commit or archive hash), transitions and scanner status |
+
+It binds to `127.0.0.1` only (`.streamlit/config.toml`) and refuses to render otherwise, sits behind
+`SPA_API_KEY`, never runs a model or the scanned code, and shows scanned content only as literal text.
 
 ## Verification
 
@@ -141,6 +158,7 @@ python -m pytest -m "not scanners"  # fast: no real scanner runs
 | Applying a fix (lab) | whole-window text splice into a scratch copy, confined to the flagged file; never committed, never applied to your checkout |
 | Running a fix (lab, gate 3b) | only after gates 1, 2, 3a pass; separate interpreter; `python -P`, pinned pytest config; allowlisted environment; timeout; CLI only, never over the API |
 | API | key on every route, fails closed when unset; body-size cap before multipart parsing; no stack traces returned |
+| Dashboard | loopback only (refuses to render otherwise); `SPA_API_KEY` gate, constant-time, lockout; scanned content never rendered as Markdown/HTML; XSRF on, telemetry off, no tracebacks in the browser; checkout paths absolute, outside scratch, optionally confined (`SPA_DASHBOARD_SOURCE_ROOT`) |
 
 ---
 
