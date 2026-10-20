@@ -20,14 +20,16 @@ SERIES_1 = "#2a78d6"
 def open_by_category(counts: dict[str, int]) -> alt.LayerChart:
     """Horizontal bars: open findings per OWASP category, largest first, value labelled at the bar end."""
     frame = pd.DataFrame({"category": list(counts), "open": list(counts.values())})
+    # labelOverlap=False: Vega-Lite otherwise drops every other category name when bars are close.
     base = alt.Chart(frame).encode(
-        y=alt.Y("category:N", sort="-x", title=None, axis=alt.Axis(labelLimit=320, ticks=False)),
+        y=alt.Y("category:N", sort="-x", title=None,
+                axis=alt.Axis(labelLimit=320, ticks=False, labelOverlap=False)),
         x=alt.X("open:Q", title="Open findings", axis=alt.Axis(tickMinStep=1, gridOpacity=0.35)),
     )
     bars = base.mark_bar(color=SERIES_1, size=14, cornerRadiusEnd=4).encode(
         tooltip=[alt.Tooltip("category:N", title="OWASP category"), alt.Tooltip("open:Q", title="Open")])
     labels = base.mark_text(align="left", dx=4).encode(text="open:Q")
-    return (bars + labels).properties(height=max(120, 30 * len(frame)))
+    return (bars + labels).properties(height=max(120, 34 * len(frame)))
 
 
 def findings_per_scan(rows: list[dict]) -> alt.Chart:

@@ -22,7 +22,8 @@ from pptx.util import Inches  # noqa: E402
 
 import build_review2_deck as style  # noqa: E402
 import build_review3_deck as deck  # noqa: E402
-from evaluation.recorded_results import FIXTURE, LIFECYCLE, LIFECYCLE_KEYS, TESTS  # noqa: E402
+from evaluation.recorded_results import FIXTURE, LIFECYCLE, LIFECYCLE_KEYS  # noqa: E402
+from evaluation.recorded_results import TESTS_AT_REVIEW3 as TESTS  # noqa: E402
 
 SLIDE_W, SLIDE_H = Inches(13.333), Inches(7.5)
 NO_NUMBER = {1, 13}

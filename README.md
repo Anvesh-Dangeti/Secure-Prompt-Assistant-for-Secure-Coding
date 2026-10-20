@@ -47,10 +47,10 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 6 | Triple-gate verification — developer-mode `verify` (gates 1, 2, 3a), lab-mode scratch-copy apply (+ 3b) | ✅ |
 | 7 | Dashboard — findings, prompt + copy, lint, rescan & verify, history (Streamlit, loopback only) | ✅ |
 | 8 | Evaluation — linter mutation sensitivity, S0–S8 ESR, weak vs linted prompts | ⬜ Review 5 |
-| 9–10 | Hardening · final | ⬜ Review 6 |
+| 9–10 | Hardening · final | ⬜ by 18 Nov |
 
 On the seeded fixture: **10/10 weaknesses detected**, precision 22/24; an eight-commit verification scenario
-covers every verdict; 621 automated tests.
+covers every verdict; 637 automated tests.
 
 ---
 
@@ -171,6 +171,7 @@ python -m pytest -m "not scanners"  # fast: no real scanner runs
 | [`docs/scope_decisions.md`](docs/scope_decisions.md) | Language and CWE scope, with evidence |
 | [`docs/revised_direction.md`](docs/revised_direction.md) | The changes made after Review 1 |
 | [`docs/review3_slides.md`](docs/review3_slides.md) | Review 3 content; deck built by `scripts/build_review3_deck.py` |
+| [`docs/review4_slides.md`](docs/review4_slides.md) | Review 4 content; deck built by `scripts/build_review4_deck.py`; demo steps in `docs/review4_presenter_script.md` |
 
 ---
 
