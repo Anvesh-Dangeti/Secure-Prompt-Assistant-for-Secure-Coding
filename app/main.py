@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import findings, health, projects
+from app.api import findings, health, projects, verification
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.db.session import init_db
@@ -66,6 +66,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(projects.router)
     app.include_router(findings.router)
+    app.include_router(verification.router)
     return app
 
 

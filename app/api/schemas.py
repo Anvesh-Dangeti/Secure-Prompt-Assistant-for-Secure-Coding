@@ -120,3 +120,31 @@ class TrackedDetailOut(TrackedOut):
 
 class SuppressRequest(BaseModel):
     reason: str = Field(min_length=3, max_length=500)
+
+
+class GateOut(BaseModel):
+    gate: str
+    title: str
+    status: str
+    detail: str
+    items: list[str] = []
+
+
+class VerificationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    project_id: int
+    tracked_finding_id: int
+    mode: str
+    before_scan_id: int | None
+    after_scan_id: int | None
+    verdict: str
+    reason: str | None
+    gates: list[GateOut]
+    target: list[str]
+    strategy: str | None
+    model: str | None
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    calls: int
+    created_at: datetime

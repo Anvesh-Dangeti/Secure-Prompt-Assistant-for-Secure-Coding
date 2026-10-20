@@ -11,6 +11,14 @@ Two kinds of finding record, deliberately separate:
 weakness can be audited rather than inferred. Suppressed findings are never
 deleted -- they keep their row and their history.
 
+Verification (Phase 6) adds three tables and changes none, so an existing
+database gains them through ``create_all`` without a migration:
+
+* ``BlindSpot`` -- a file or package a scanner could not examine in a scan;
+* ``SymbolSnapshot`` -- structural facts about a flagged function (signature,
+  decorators, ...), never its code: scans keep evidence, not source;
+* ``Verification`` -- one verdict on one attempted fix (the remediation history).
+
 All queries go through the ORM, which parameterises every value.
 """
 
@@ -57,6 +65,18 @@ class LifecycleState(str, enum.Enum):
     RESOLVED = "RESOLVED"
     REGRESSION = "REGRESSION"
     SUPPRESSED = "SUPPRESSED"
+
+
+class Verdict(str, enum.Enum):
+    VERIFIED_RESOLVED = "VERIFIED_RESOLVED"   # every gate passed
+    FIX_REJECTED = "FIX_REJECTED"             # a gate failed, or the model's answer was unusable
+    UNVERIFIED = "UNVERIFIED"                 # nothing failed, but the evidence is incomplete
+    ERROR = "ERROR"                           # there was no fix to judge (lab: the model never answered)
+
+
+class VerificationMode(str, enum.Enum):
+    DEVELOPER = "developer"   # the developer's own assistant changed the code; gates 1, 2, 3a
+    LAB = "lab"               # our local model's proposal, applied in scratch; gates 1, 2, 3a, 3b
 
 
 def _enum(cls: type[enum.Enum]) -> Enum:
@@ -186,3 +206,76 @@ class LifecycleEvent(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     tracked_finding: Mapped[TrackedFinding] = relationship(back_populates="events")
+
+
+class BlindSpot(Base):
+    """A file or package one scanner could not examine in one scan.
+
+    A finding absent from such a scope is not evidence of a fix; verification
+    reads these rows to apply the same rule the lifecycle applies in memory.
+    """
+
+    __tablename__ = "blind_spots"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    tool: Mapped[str] = mapped_column(String(40))
+    scope_key: Mapped[str] = mapped_column(String(520))
+
+
+class SymbolSnapshot(Base):
+    """What a flagged symbol looked like in one scan -- facts, not code.
+
+    Gate 3a compares the snapshot before a fix with the one after it. The
+    signature and decorators are redacted ``ast.unparse`` text; no function
+    body is ever stored.
+    """
+
+    __tablename__ = "symbol_snapshots"
+    __table_args__ = (UniqueConstraint("scan_id", "file_path", "symbol", name="uq_snapshot_scan_symbol"),)
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scan_id: Mapped[int] = mapped_column(ForeignKey("scans.id"), index=True)
+    file_path: Mapped[str] = mapped_column(String(500))
+    symbol: Mapped[str] = mapped_column(String(300))          # qualname, NAME, __main__, package, <file>
+    kind: Mapped[str] = mapped_column(String(20))             # function | assignment | main-block | dependency | file
+    state: Mapped[str] = mapped_column(String(20))            # PRESENT | MISSING | FILE_MISSING | UNPARSEABLE
+    span_start: Mapped[int | None] = mapped_column(Integer)
+    span_end: Mapped[int | None] = mapped_column(Integer)
+    signature: Mapped[str | None] = mapped_column(Text)
+    decorators: Mapped[list[str]] = mapped_column(JSON, default=list)
+    body_trivial: Mapped[bool] = mapped_column(Boolean, default=False)
+    undefined_names: Mapped[list[str]] = mapped_column(JSON, default=list)
+    star_import: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class Verification(Base):
+    """One verdict on one attempted fix: the remediation history.
+
+    Developer mode records the before and after scans it compared. Lab mode
+    scans scratch copies that are not project scans, so it records the
+    strategy, model, parameters and token counts instead (Paper 3 protocol).
+    """
+
+    __tablename__ = "verifications"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    tracked_finding_id: Mapped[int] = mapped_column(ForeignKey("tracked_findings.id"), index=True)
+    mode: Mapped[VerificationMode] = mapped_column(_enum(VerificationMode))
+    before_scan_id: Mapped[int | None] = mapped_column(ForeignKey("scans.id"))
+    after_scan_id: Mapped[int | None] = mapped_column(ForeignKey("scans.id"))
+    verdict: Mapped[Verdict] = mapped_column(_enum(Verdict))
+    reason: Mapped[str | None] = mapped_column(Text)
+    gates: Mapped[list[dict]] = mapped_column(JSON, default=list)
+    target: Mapped[list[str]] = mapped_column(JSON, default=list)   # labels of every finding in the weakness
+    strategy: Mapped[str | None] = mapped_column(String(10))
+    provider: Mapped[str | None] = mapped_column(String(40))
+    model: Mapped[str | None] = mapped_column(String(120))
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer)
+    calls: Mapped[int] = mapped_column(Integer, default=0)
+    duration_s: Mapped[float | None] = mapped_column(Float)
+    proposal: Mapped[dict | None] = mapped_column(JSON)              # lab only: the model's validated answer
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

@@ -1,12 +1,16 @@
 """Run a scan of a project and record it: the entry point used by the API and CLI.
 
-    ingest (clone or extract into scratch)  ->  scan_tree  ->  persist  ->  lifecycle
+    ingest (clone or extract into scratch)  ->  scan_tree  ->  snapshot symbols  ->  persist  ->  lifecycle
 
 Input is validated *before* anything is written (an unsafe URL never creates
 a project or a scan row). Once a scan row exists, every outcome is recorded:
 an ingest failure marks it FAILED with a user-safe reason; scanner failures
 mark it PARTIAL. Nothing is ever recorded as a clean COMPLETED scan unless
 every scanner ran successfully.
+
+Symbol snapshots (facts for verification gate 3a) are taken while the scratch
+copy still exists; a failure there only weakens later verification (gate 3a
+becomes UNVERIFIED), so it never fails the scan itself.
 """
 
 from __future__ import annotations
@@ -24,7 +28,7 @@ from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.core.redaction import redact
 from app.core.scratch import scratch_dir
-from app.db.models import Finding, Project, Scan, ScannerRun, ScanStatus, SourceType
+from app.db.models import BlindSpot, Finding, Project, Scan, ScannerRun, ScanStatus, SourceType
 from app.db.session import session_scope
 from app.intelligence.tracking import update_tracking
 from app.pipeline import TreeScan, scan_tree
@@ -32,6 +36,8 @@ from app.scanners import Scanner
 from app.repository.git_clone import CloneError, clone
 from app.repository.url_validator import UnsafeRepositoryURL, ValidatedRepoURL, validate_repo_url
 from app.repository.zip_extract import UnsafeArchiveError, extract_zip
+from app.verification import snapshots
+from app.verification.symbols import SymbolFacts
 
 log = get_logger(__name__)
 _PROJECT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$")
@@ -80,8 +86,12 @@ def get_or_create_project(session: Session, name: str, source_type: SourceType, 
     return project
 
 
-def _persist_results(session: Session, scan: Scan, tree: TreeScan) -> None:
+def _persist_results(session: Session, scan: Scan, tree: TreeScan, symbols: list[SymbolFacts]) -> None:
+    for facts in symbols:
+        session.add(snapshots.to_row(scan.id, facts))
     for result in tree.results:
+        for scope in sorted(result.unverified_scopes):
+            session.add(BlindSpot(scan_id=scan.id, tool=result.tool, scope_key=scope[:520]))
         notes = list(result.notes)
         if result.unverified_scopes:
             notes.append(f"{len(result.unverified_scopes)} scope(s) not verifiable")
@@ -109,6 +119,14 @@ def _scan_status(tree: TreeScan) -> ScanStatus:
     return ScanStatus.FAILED
 
 
+def _snapshot(root: Path, tree: TreeScan, carried: list[snapshots.Carried], scan_id: int) -> list[SymbolFacts]:
+    try:
+        return snapshots.capture(root, tree.findings, carried)
+    except Exception:  # noqa: BLE001 -- missing snapshots make gate 3a UNVERIFIED, never a pass
+        log.exception("symbol snapshot failed", extra={"scan_id": scan_id})
+        return []
+
+
 Ingest = Callable[[Path], tuple[Path, str]]
 
 
@@ -120,8 +138,10 @@ def _run(project_name: str, source_type: SourceType, repo_url: str | None, inges
         session.add(scan)
         session.flush()
         scan_id, project_id = scan.id, project.id
+        carried = snapshots.carried_symbols(session, project.id)
 
     tree: TreeScan | None = None
+    symbols: list[SymbolFacts] = []
     source_ref: str | None = None
     error: str | None = None
     try:
@@ -130,6 +150,7 @@ def _run(project_name: str, source_type: SourceType, repo_url: str | None, inges
             out.mkdir()
             root, source_ref = ingest(work)
             tree = scan_tree(root, out, scanners)
+            symbols = _snapshot(root, tree, carried, scan_id)
     except (UnsafeArchiveError, CloneError, UnsafeRepositoryURL) as exc:
         error = str(exc)
     except Exception as exc:  # noqa: BLE001 -- recorded as FAILED, never as success
@@ -148,7 +169,7 @@ def _run(project_name: str, source_type: SourceType, repo_url: str | None, inges
             scan.error = redact(error or "scan failed")
         else:
             scan.status = _scan_status(tree)
-            _persist_results(session, scan, tree)
+            _persist_results(session, scan, tree, symbols)
             session.flush()
             lifecycle = update_tracking(session, scan, tree)
         return ScanSummary(
