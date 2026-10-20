@@ -37,8 +37,9 @@ from build_review2_deck import (  # noqa: E402
     slide_number, stacked_row, textbox, write,
 )
 from evaluation.recorded_results import (  # noqa: E402
-    FIXTURE, LIFECYCLE, LIFECYCLE_KEYS, LIVE_VULPY, SELF_SCAN, TESTS,
+    FIXTURE, LIFECYCLE, LIFECYCLE_KEYS, LIVE_VULPY, SELF_SCAN,
 )
+from evaluation.recorded_results import TESTS_AT_REVIEW3 as TESTS  # noqa: E402  (the count shown on 10 Oct)
 
 GROUND_TRUTH = ROOT / "fixtures" / "flask_vuln_app" / "ground_truth.yaml"
 TOOL_LABEL = {"semgrep": "Semgrep", "bandit": "Bandit", "gitleaks": "Gitleaks", "pip-audit": "pip-audit"}

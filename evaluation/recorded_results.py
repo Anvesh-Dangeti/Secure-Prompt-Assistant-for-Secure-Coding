@@ -61,6 +61,20 @@ LAB_REPLAYS = {
 }
 FIXTURE_BEHAVIOUR_TESTS = 10   # fixtures/flask_vuln_app_tests, all passing on the unmodified fixture
 
+# ---- prompt linter over the 24 real fixture findings (asserted) -------------
+# tests/data/flask_vuln_app_findings.json; no model involved -- this measures the prompts, not the fixes.
+LINTER = {
+    "findings": 24,
+    # strategy -> (prompts that pass the linter, mean constituent score rounded to 2 places)
+    "by_strategy": {
+        "S0": (0, 0.38), "S1": (0, 0.38), "S2": (1, 0.72), "S3": (0, 0.45), "S4": (0, 0.38),
+        "S5": (0, 0.38), "S6": (0, 0.38), "S7": (24, 1.0), "S8": (1, 0.71),
+    },
+    "s0_score_range": (0.2, 0.6),   # S0 quotes the scanner: Semgrep's messages carry hints, Bandit's do not
+    "fixits_repair_s0": 24,         # S0 prompts that pass after the linter's fix-its are applied
+    "s7_tokens": (255, 373),        # estimated tokens in S7's first message, min and max
+}
+
 # ---- snapshots (recorded 8 Oct 2026, not asserted) -------------------------
 LIVE_VULPY = {
     "url": "https://github.com/fportantier/vulpy",
@@ -77,4 +91,5 @@ SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 
     "bandit_low": 3,          # B404 + 2x B603, inherent to the subprocess wrapper
     "fixed_from_self_scan": 3,  # B607 taskkill path, the Semgrep env-taint it caused, B101 asserts
 }
-TESTS = 278
+TESTS_AT_REVIEW3 = 278
+TESTS = 637
