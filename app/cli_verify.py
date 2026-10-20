@@ -19,9 +19,12 @@ import shutil
 import sys
 from pathlib import Path
 
+from app.ai.providers import ProviderError, ReplayProvider, get_provider
+from app.ai.strategies import DEFAULT_STRATEGY, STRATEGIES
 from app.core.scratch import scratch_dir
 from app.db.models import Project, SourceType, TrackedFinding, Verification
 from app.db.session import init_db, session_scope
+from app.sandbox.lab import LabError, run_lab_trial
 from app.scan_service import InvalidRequest, ScanSummary, scan_git, scan_zip
 from app.verification.gates import GateResult, GateStatus
 from app.verification.service import NotVerifiable, VerificationNotFound, history, verify
@@ -31,7 +34,7 @@ _SHORT = {GateStatus.NOT_APPLICABLE: "n/a", GateStatus.NOT_RUN: "not run"}
 
 def print_verification(row: Verification) -> None:
     where = (f"scan #{row.before_scan_id} -> scan #{row.after_scan_id}" if row.after_scan_id
-             else f"lab, {row.strategy or '-'} via {row.model or row.provider or '-'}")
+             else f"{row.strategy or '-'} via {row.model or row.provider or '-'}")
     print(f"\n  verification #{row.id}  finding #{row.tracked_finding_id}  ({row.mode.value}: {where})")
     print(f"  weakness: {len(row.target)} finding(s)")
     for label in row.target:
@@ -43,6 +46,8 @@ def print_verification(row: Verification) -> None:
             print(f"  {'':<44}{item}")
         if len(g.items) > 8:
             print(f"  {'':<44}... {len(g.items) - 8} more")
+    if row.proposal:
+        print(f"\n  model's summary (untrusted): {row.proposal.get('summary') or '-'}")
     print(f"\n  verdict: {row.verdict.value}" + (f"  -- {row.reason}" if row.reason else ""))
     if row.prompt_tokens is not None:
         print(f"  tokens: {row.prompt_tokens} prompt + {row.completion_tokens} completion over {row.calls} call(s)")
@@ -124,6 +129,21 @@ def cmd_verifications(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_lab_verify(args: argparse.Namespace) -> int:
+    init_db()
+    try:
+        provider = ReplayProvider.from_file(Path(args.replay)) if args.replay else get_provider(args.provider)
+        with session_scope() as session:
+            row = run_lab_trial(session, args.finding, Path(args.source).resolve(), args.strategy, provider,
+                                run_tests=not args.no_tests)
+            print_verification(row)
+            verdict = row.verdict.value
+    except (VerificationNotFound, LabError, ProviderError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    return 0 if verdict == "VERIFIED_RESOLVED" else 1
+
+
 def register(sub: argparse._SubParsersAction) -> None:
     p = sub.add_parser("verify", help="rescan the fixed code and run verification gates 1, 2, 3a")
     p.add_argument("finding", type=int, help="tracked finding id (see `findings`)")
@@ -133,6 +153,16 @@ def register(sub: argparse._SubParsersAction) -> None:
     how.add_argument("--scan", type=int, help="judge this existing scan instead of scanning again")
     p.add_argument("--label", help="label for the new scan")
     p.set_defaults(func=cmd_verify)
+
+    p = sub.add_parser("lab-verify", help="lab mode: model fix -> scratch copy -> rescan -> gates 1, 2, 3a, 3b")
+    p.add_argument("finding", type=int, help="tracked finding id (see `findings`)")
+    p.add_argument("--source", required=True, help="the fixture the finding was scanned from")
+    p.add_argument("--strategy", default=DEFAULT_STRATEGY, choices=list(STRATEGIES))
+    model = p.add_mutually_exclusive_group()
+    model.add_argument("--provider", default="ollama", choices=["ollama"])
+    model.add_argument("--replay", help="a recorded answer (evaluation/replays/*.json) instead of a live model")
+    p.add_argument("--no-tests", action="store_true", help="skip gate 3b (the verdict is then UNVERIFIED at best)")
+    p.set_defaults(func=cmd_lab_verify)
 
     p = sub.add_parser("verifications", help="remediation history of a tracked finding")
     p.add_argument("finding", type=int)

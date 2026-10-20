@@ -1,7 +1,8 @@
-"""The developer-mode CLI loop: scan-zip -> (fix) -> verify --source -> verifications (stand-in scanners)."""
+"""The verification CLI: scan-zip -> (fix) -> verify --source -> verifications, and lab-verify (stand-in scanners)."""
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -55,3 +56,20 @@ def test_usage_errors(code: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["verify", str(target), "--rescan"]) == 2             # a ZIP project has no repository
     assert main(["verify", "9999", "--scan", "1"]) == 2
     assert main(["verifications", "9999"]) == 2
+
+
+def test_lab_verify_with_a_replay(code: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    main(["scan-zip", str(code), "--project", "lab"])
+    target = _target()
+    good = ('@app.route("/user")\ndef get_user():\n    user_id = request.args.get("id")\n'
+            '    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))\n    return "ok"')
+    replay = tmp_path / "good.json"
+    replay.write_text(json.dumps({"final": {"code": good, "imports": [], "summary": "parameterised"}}),
+                      encoding="utf-8")
+    capsys.readouterr()
+    # No behaviour tests for the toy app: the best possible verdict is UNVERIFIED, never a pass.
+    assert main(["lab-verify", str(target), "--source", str(code), "--replay", str(replay), "--no-tests"]) == 1
+    out = capsys.readouterr().out
+    assert "(lab: S7 via replay:good.json)" in out and "verdict: UNVERIFIED" in out
+    assert "model's summary (untrusted): parameterised" in out
+    assert main(["lab-verify", str(target), "--source", str(code), "--replay", str(tmp_path / "none.json")]) == 2

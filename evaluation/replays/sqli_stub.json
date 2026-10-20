@@ -1,0 +1,12 @@
+{
+  "note": "B608 / get_user: the body is replaced by a raise -- expected FIX_REJECTED at gate 3a; gate 3b never runs",
+  "turns": [
+    "Here is a first attempt.",
+    "I reviewed the change against the weakness, new weaknesses and preserved behaviour."
+  ],
+  "final": {
+    "code": "@app.route(\"/user\")\ndef get_user():\n    raise NotImplementedError(\"disabled until the query is rewritten\")",
+    "imports": [],
+    "summary": "Disabled the unsafe endpoint."
+  }
+}

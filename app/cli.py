@@ -29,7 +29,7 @@ from sqlalchemy import select
 from app import cli_ai, cli_verify
 from app.core.config import get_settings
 from app.core.logging import configure_logging
-from app.core.scratch import scratch_dir
+from app.core.scratch import copy_trusted_tree, scratch_dir
 from app.db.models import LifecycleEvent, LifecycleState, Project, TrackedFinding
 from app.db.session import init_db, session_scope
 from app.intelligence.tracking import TrackingError, suppress
@@ -99,14 +99,6 @@ def print_ground_truth(fixture: Path, tree: TreeScan) -> None:
         print(f"  semgrep+bandit agree   : {both}/{total} weaknesses both are expected to find")
 
 
-def _copy_trusted_tree(source: Path, dest: Path) -> None:
-    ignore = shutil.ignore_patterns(*EXCLUDED_DIRS)
-    shutil.copytree(source, dest, symlinks=True, ignore=ignore)
-    for path in list(dest.rglob("*")):
-        if path.is_symlink():
-            path.unlink()  # never follow links out of the tree
-
-
 def cmd_scanners(_args: argparse.Namespace) -> int:
     rows = [[s.name, "yes" if s.is_available() else "NO", s.version() or "-", str(s.locate() or "-")]
             for s in all_scanners()]
@@ -122,7 +114,7 @@ def cmd_scan_dir(args: argparse.Namespace) -> int:
     with scratch_dir("scan-") as work:
         root, out = work / "src", work / "out"
         out.mkdir()
-        _copy_trusted_tree(source, root)
+        copy_trusted_tree(source, root, EXCLUDED_DIRS)
         tree = scan_tree(root, out)
     if args.json:
         print(json.dumps([asdict(f) for f in tree.findings], indent=2))

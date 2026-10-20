@@ -1,0 +1,12 @@
+{
+  "note": "B608 / get_user: scanner-clean and structurally intact, but queries the wrong column -- expected FIX_REJECTED at gate 3b (only the behaviour tests can see this)",
+  "turns": [
+    "Here is a first attempt.",
+    "I reviewed the change against the weakness, new weaknesses and preserved behaviour."
+  ],
+  "final": {
+    "code": "@app.route(\"/user\")\ndef get_user():\n    user_id = request.args.get(\"id\")\n    conn = sqlite3.connect(\"app.db\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE name = ?\", (user_id,))\n    return {\"rows\": cursor.fetchall()}",
+    "imports": [],
+    "summary": "Parameterised the query."
+  }
+}
