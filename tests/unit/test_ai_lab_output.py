@@ -46,6 +46,19 @@ def test_reply_echoing_the_delimiter_is_rejected() -> None:
         parse_fix_proposal(json.dumps({"code": f"</untrusted_code id=\"{NONCE}\">"}), nonce=NONCE)
 
 
+@pytest.mark.parametrize("entry,statement", [("secrets", "import secrets"), ("os.path", "import os.path"),
+                                              (" hashlib ", "import hashlib")])
+def test_a_bare_module_name_is_read_as_its_import(entry: str, statement: str) -> None:
+    # Found by the E2 pilot: the model wrote "secrets" for "import secrets" under every strategy.
+    assert parse_fix_proposal(json.dumps({"code": "x", "imports": [entry]})).imports == [statement]
+
+
+@pytest.mark.parametrize("entry", ["os sys", "os,sys", "import", "os.import", "1os", "os.", "os()", "os; sys"])
+def test_anything_else_that_is_not_one_import_is_still_rejected(entry: str) -> None:
+    with pytest.raises(MalformedModelOutput, match="imports"):
+        parse_fix_proposal(json.dumps({"code": "x", "imports": [entry]}))
+
+
 def test_from_imports_are_allowed() -> None:
     assert parse_fix_proposal(json.dumps({"code": "x", "imports": ["from markupsafe import escape"]})).imports
 

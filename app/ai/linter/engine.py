@@ -16,6 +16,12 @@ from app.ai.linter.hygiene import check_hygiene
 from app.ai.linter.report import CONSTITUENTS, WARNING, LintIssue, LintReport
 
 SHORTENED_RATIO = 0.6
+# The generated sentences A7 tracks one by one (their text is the fix-it for the rule).
+SENTENCES = {"A5": "opening", "A3": "handling directive", "A2": "guard", "A4": "scope"}
+
+
+def _norm(text: str) -> str:
+    return " ".join(text.lower().split())
 
 
 def _shortening(text: str, preamble: str, present: dict, exp: LintExpectation) -> list[LintIssue]:
@@ -28,6 +34,15 @@ def _shortening(text: str, preamble: str, present: dict, exp: LintExpectation) -
     if lost:
         issues.append(LintIssue("A7", WARNING, "editing removed constituents the generated prompt had: "
                                 + ", ".join(lost)))
+    # Sentence by sentence (found by E1): S7 restates its mitigation in the guard, so deleting the directive
+    # sentence can leave A3's vocabulary behind. The constituent then still "passes", but a generated
+    # sentence was edited out -- say so, as a warning, since a reworded sentence may keep its meaning.
+    edited, generated = _norm(text), _norm(exp.canonical)
+    dropped = [name for rule, name in SENTENCES.items() if rule not in lost and (s := exp.fixits.get(rule))
+               and _norm(s) in generated and _norm(s) not in edited]
+    if dropped:
+        issues.append(LintIssue("A7", WARNING, "the generated " + ", ".join(dropped) + " sentence was edited out; "
+                                "check that its meaning is still in the prompt"))
     original = len(split_prompt(exp.canonical).instructions.strip())
     kept = len(split_prompt(text).instructions.strip())
     if original and kept / original < SHORTENED_RATIO:
