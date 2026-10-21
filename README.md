@@ -51,7 +51,7 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 9–10 | Hardening · final | ⬜ by 18 Nov |
 
 On the seeded fixture: **10/10 weaknesses detected**, precision 22/24; an eight-commit verification scenario
-covers every verdict; 637 automated tests.
+covers every verdict; E1 and the E2 pilot are measured; 743 automated tests.
 
 ---
 
