@@ -49,7 +49,7 @@ def test_reply_echoing_the_delimiter_is_rejected() -> None:
 @pytest.mark.parametrize("entry,statement", [("secrets", "import secrets"), ("os.path", "import os.path"),
                                               (" hashlib ", "import hashlib")])
 def test_a_bare_module_name_is_read_as_its_import(entry: str, statement: str) -> None:
-    # Found by the E2 pilot: the model wrote "secrets" for "import secrets" under every strategy.
+    # Found by the E2 pilot: the model wrote "secrets" for "import secrets" under 7 of 9 strategies.
     assert parse_fix_proposal(json.dumps({"code": "x", "imports": [entry]})).imports == [statement]
 
 

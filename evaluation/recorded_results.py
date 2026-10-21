@@ -75,6 +75,48 @@ LINTER = {
     "s7_tokens": (255, 373),        # estimated tokens in S7's first message, min and max
 }
 
+# ---- E1: linter mutation sensitivity (asserted; no model) ---------------------
+# evaluation/e1_mutation.py: the S7 first message of each of the 24 real findings, mutated the way a
+# developer edits a prompt, linted bound to its finding. failed = an error; flagged = an error or a warning.
+E1 = {
+    "findings": 24,
+    "controls_clean": 24,                       # unmutated S7 prompts: no error, no warning
+    "constituent": {"mutants": 168, "failed": 149, "flagged": 168},   # mutants that remove a constituent
+    "unchecked": {"mutants": 96, "failed": 0, "flagged": 0},          # no rule covers these: no false alarms
+    # operator -> (failed, flagged), each out of 24
+    "by_operator": {
+        "delete opening": (24, 24), "delete explanation": (0, 0), "delete directive": (9, 24),
+        "delete guard": (20, 24), "delete classification": (0, 0), "delete scope": (24, 24),
+        "delete inert-data instruction": (24, 24), "delete untrusted code": (0, 0),
+        "delete output contract": (0, 0), "genericise directive + guard": (24, 24),
+        "truncate to the opening": (24, 24), "undelimit the code": (0, 16),
+    },
+}
+# Before the A7 sentence check that E1 motivated (21 Oct), a deleted directive or guard was flagged only
+# 9/24 and 20/24 times: S7's guard restates the mitigation, so A3's vocabulary survived the deletion.
+# Historical, not asserted (the linter no longer behaves this way).
+E1_BEFORE_A7_SENTENCES = {"delete directive": (9, 9), "delete guard": (20, 20)}
+
+# ---- E2 pilot: S0-S8 live fixes by the local model (recorded 21 Oct 2026) -----------
+# evaluation/e2_strategies.py -> evaluation/results/e2_pilot.json. One trial per (seeded weakness, strategy),
+# temperature 0, seed 42; every fix rescanned by all four scanners and judged by gates 1, 2, 3a, 3b.
+# Needs the model, so tests do not re-run it: they recompute these numbers from the committed per-trial rows.
+E2_PILOT = {
+    "trials": 90,
+    "verified": 59,
+    "model": "qwen2.5-coder:7b-instruct",
+    "digest": "dae161e27b0e",
+    # strategy -> (verified, applicable, ESR, prompt + completion tokens over its ten trials)
+    "by_strategy": {
+        "S0": (5, 10, 0.5, 3745), "S1": (6, 10, 0.6, 3825), "S2": (9, 10, 0.9, 4252),
+        "S3": (7, 10, 0.7, 5016), "S4": (6, 10, 0.6, 3912), "S5": (5, 10, 0.5, 17507),
+        "S6": (6, 10, 0.6, 3947), "S7": (7, 10, 0.7, 23356), "S8": (8, 10, 0.8, 6614),
+    },
+    "failed_at": {"1": 22, "3a": 2, "3b": 7},   # where the 31 rejected fixes were stopped
+    "dependency_bumps_rejected": 9,             # every strategy pinned PyYAML 5.3.1; PYSEC-2021-142 needs 5.4
+    "strict_imports_reply_failures": 10,        # first run (e2_pilot_strict_imports.json), before the fix
+}
+
 # ---- snapshots (recorded 8 Oct 2026, not asserted) -------------------------
 LIVE_VULPY = {
     "url": "https://github.com/fportantier/vulpy",
