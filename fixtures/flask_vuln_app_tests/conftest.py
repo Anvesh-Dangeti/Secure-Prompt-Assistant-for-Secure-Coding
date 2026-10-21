@@ -10,6 +10,12 @@ import pytest
 
 OUTPUT = "PING 127.0.0.1: 1 packets transmitted, 1 received"
 
+# Deployment configuration. The standard fix for the hard-coded credential (CWE-798)
+# reads API_TOKEN from the environment, and a deployed app would have it set, so the
+# behaviour tests run with it set too. The unmodified fixture ignores it and still passes.
+# Set before any test imports the code under test (config is read at import time).
+os.environ["API_TOKEN"] = "behaviour-test-token"
+
 
 @pytest.fixture
 def module():

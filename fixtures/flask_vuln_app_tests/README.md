@@ -25,6 +25,9 @@ Known limits, stated rather than hidden:
 
 - `restore_session` (CWE-502) is checked for presence only. A correct fix changes
   the wire format (pickle to JSON), and no single input is valid for both.
-- A fix that *requires* a new environment variable at import time (for example
-  `os.environ["PAYMENT_API_TOKEN"]`) fails these tests. That is a real behaviour
-  change: the application no longer starts without new configuration.
+- The tests run with the deployment configuration the fixture's own settings imply:
+  `API_TOKEN` is set in the environment (`conftest.py`), so the standard CWE-798 fix
+  (`API_TOKEN = os.environ["API_TOKEN"]` or `os.getenv("API_TOKEN")`) keeps its
+  behaviour. A fix that invents a *different* variable name (for example
+  `PAYMENT_API_TOKEN`) still fails: the application then needs new configuration
+  that nothing provides.

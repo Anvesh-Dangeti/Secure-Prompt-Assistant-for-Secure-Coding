@@ -9,7 +9,11 @@ untrusted text, so it is validated here:
   must not contain the prompt's delimiter nonce (an echo of our markers);
 * every ``imports`` entry must parse as exactly one ``import`` / ``from ...
   import`` statement -- the only change allowed outside the replaced window,
-  and nothing that could smuggle in other code.
+  and nothing that could smuggle in other code. A bare dotted module name
+  (``os``, ``os.path``) has exactly one reading, ``import os``, and is read
+  that way; it is then checked like any other entry. (The E2 pilot found the
+  local model writing ``"secrets"`` for ``"import secrets"`` under every
+  strategy, which measured the output format rather than the fix.)
 
 A reply that fails any check is ``MalformedModelOutput``: recorded as a
 rejected fix, never repaired by guessing what the model meant.
@@ -19,12 +23,21 @@ from __future__ import annotations
 
 import ast
 import json
+import keyword
 import re
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
 MAX_REPLY_CHARS = 60_000
 _FENCE = re.compile(r"^\s*```[^\n]*\n(.*?)\n?```\s*$", re.DOTALL)
+_MODULE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*(?:\.[A-Za-z_][A-Za-z0-9_]*)*")
+
+
+def _as_statement(line: str) -> str:
+    """``os`` -> ``import os``; anything else is returned unchanged for the statement check."""
+    if _MODULE.fullmatch(line) and not any(keyword.iskeyword(part) for part in line.split(".")):
+        return f"import {line}"
+    return line
 
 
 class MalformedModelOutput(ValueError):
@@ -52,7 +65,7 @@ class FixProposal(BaseModel):
     def _single_import_statements(cls, values: list[str]) -> list[str]:
         clean = []
         for raw in values:
-            line = raw.strip()
+            line = _as_statement(raw.strip())
             if not line or "\n" in line or ";" in line or len(line) > 200:
                 raise ValueError(f"not a single import statement: {raw!r}")
             try:

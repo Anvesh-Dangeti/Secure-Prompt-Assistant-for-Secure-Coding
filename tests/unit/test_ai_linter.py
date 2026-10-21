@@ -79,6 +79,18 @@ def test_shortening_against_the_generated_prompt_is_reported() -> None:
     assert any("A2, A3" in m for m in a7) and any("shortened" in m for m in a7)
 
 
+def test_a_generated_sentence_edited_out_is_reported_even_when_its_vocabulary_survives() -> None:
+    # Found by E1: S7's guard restates the mitigation, so deleting only the directive leaves A3 satisfied.
+    ctx = context("B602")                                   # CWE-78: the guard mentions the allowlist
+    canonical = build_prompt(ctx, "S7", nonce=NONCE).messages[0]
+    exp = expectation_for(ctx, canonical=canonical)
+    edited = "\n\n".join(p for p in canonical.split("\n\n") if not p.startswith("Required change:"))
+    report = lint(edited, exp)
+    assert report.passed and report.constituents["A3"] is True
+    assert any(i.rule == "A7" and "handling directive sentence was edited out" in i.message for i in report.warnings)
+    assert not [i for i in lint(canonical, exp).issues if i.rule == "A7"]      # nothing edited, nothing said
+
+
 def test_unbound_lint_of_a_typical_developer_prompt() -> None:
     report = lint("fix the security issue in this function\n\n```python\n" + SQL.code + "\n```")
     assert not report.bound
