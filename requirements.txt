@@ -15,7 +15,12 @@
 # ---- web API ---------------------------------------------------------------
 fastapi==0.142.4
 uvicorn==0.54.0
-python-multipart==0.0.32        # multipart parsing for ZIP uploads
+python-multipart==0.0.32        # multipart parsing for ZIP uploads and the web interface's forms
+
+# ---- web interface (Phase 7b): server-rendered pages, signed session cookie ----
+# Pinned here although Streamlit also pulls them in: they must survive its removal.
+Jinja2==3.1.6                   # templates, autoescaping forced on (dashboard/web/render.py)
+itsdangerous==2.2.0             # signs the session cookie (Starlette SessionMiddleware)
 
 # ---- configuration -----------------------------------------------------------
 pydantic==2.13.5

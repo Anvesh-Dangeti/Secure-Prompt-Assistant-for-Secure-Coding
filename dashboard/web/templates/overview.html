@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}Overview · {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>{{ project.name }}</h1>
+    <p class="sub">
+      {{ "Git repository" if project.source_type == "git" else "Local checkout" }}
+      {% if project.repo_url %}· <span class="mono">{{ project.repo_url }}</span>{% endif %}
+      · {{ project.scans }} scan{{ "" if project.scans == 1 else "s" }}
+    </p>
+  </div>
+  {% if o.latest %}
+  <div class="head-meta">Latest scan #{{ o.latest.id }} {{ m.scan_badge(o.latest.status) }} <span class="meta">{{ o.latest.started_at|when }}</span></div>
+  {% endif %}
+</div>
+
+<section class="tiles" aria-label="Open findings by severity">
+  {% for sev in severities %}
+  <div class="tile">
+    <div class="tile-label">{{ m.sev_badge(sev) }}</div>
+    <div class="tile-value">{{ o.open_by_severity.get(sev, 0) }}</div>
+    <div class="tile-foot">open</div>
+  </div>
+  {% endfor %}
+</section>
+
+<div class="cols-2">
+  <section class="card">
+    <h2>Lifecycle</h2>
+    <p class="meta">NEW, RESOLVED and REGRESSION are what the latest scans did; STILL_OPEN and SUPPRESSED carry forward. A finding is tracked by fingerprint, never by line number.</p>
+    <div class="mini-tiles">
+      {% for state, count in o.states.items() %}
+      <div class="mini-tile">{{ m.state_badge(state) }}<span class="mini-value">{{ count }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+  <section class="card">
+    <h2>Latest verdict per finding</h2>
+    <p class="meta">Decided by rescanning: gate 1 the weakness is gone, gate 2 nothing new, gate 3a the function is intact.</p>
+    <div class="mini-tiles">
+      {% for verdict, count in o.verdicts.items() %}
+      <div class="mini-tile">{{ m.verdict_badge(verdict) }}<span class="mini-value">{{ count }}</span></div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<div class="cols-2">
+  <section class="card">
+    <h2>Open findings by OWASP category</h2>
+    {% if o.open_by_owasp %}
+    {{ m.hbar_chart(owasp_chart, "Open findings by OWASP category") }}
+    <details>
+      <summary>As a table</summary>
+      <table class="data compact">
+        <thead><tr><th>OWASP category</th><th class="num">Open</th></tr></thead>
+        <tbody>{% for cat, n in o.open_by_owasp.items() %}<tr><td>{{ cat }}</td><td class="num">{{ n }}</td></tr>{% endfor %}</tbody>
+      </table>
+    </details>
+    {% else %}
+    <p class="empty">Nothing open.</p>
+    {% endif %}
+  </section>
+  <section class="card">
+    <h2>Findings reported per scan</h2>
+    {{ m.line_chart(scan_chart, "Findings reported per scan") }}
+    <p class="meta">Every scan of this project, in order. <a href="/p/{{ project.id }}/history">Scan history</a> has the table.</p>
+  </section>
+</div>
+
+{% if o.latest %}
+<section class="card">
+  <h2>What scan #{{ o.latest.id }} could see</h2>
+  <p class="meta">A scanner that did not run can never resolve a finding: its findings stay open as UNVERIFIED.</p>
+  <div class="table-wrap">
+  <table class="data">
+    <thead><tr><th>Scanner</th><th>Status</th><th>Version</th><th class="num">Findings</th><th class="num">Seconds</th><th>Note</th></tr></thead>
+    <tbody>
+    {% for r in o.scanner_runs %}
+      <tr><td>{{ r.scanner }}</td><td>{{ m.scan_badge(r.status) }}</td><td class="mono">{{ r.version }}</td>
+          <td class="num">{{ r.findings }}</td><td class="num">{{ r.seconds }}</td><td>{{ r.error }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+
+<details class="card">
+  <summary><h2 class="inline">Scan again</h2></summary>
+  <form method="post" action="/p/{{ project.id }}/scan" hx-post="/p/{{ project.id }}/scan" hx-target="#scan-result"
+        hx-disabled-elt="find button" class="stack narrow">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    {% if project.source_type == "zip" %}
+    <label for="path">Checkout to scan (absolute path)</label>
+    <input id="path" name="path" class="mono" maxlength="4096" required value="{{ checkout }}" spellcheck="false">
+    {% else %}
+    <p class="meta">This project tracks a git repository: the scan re-clones it.</p>
+    {% endif %}
+    <label for="label">Label (optional)</label>
+    <input id="label" name="label" maxlength="120">
+    <div class="actions">
+      <button class="btn primary" type="submit">Scan</button>
+      <span class="htmx-indicator spinner" aria-hidden="true"></span>
+      <span class="htmx-indicator meta">Scanning with four tools…</span>
+    </div>
+  </form>
+  <div id="scan-result" aria-live="polite"></div>
+</details>
+{% endblock %}

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+{% include "_head.html" %}
+<title>Sign in · Secure Prompt Assistant</title>
+</head>
+<body class="login-page">
+<main class="login">
+  <div class="login-card">
+    <div class="brand">{% include "_mark.html" %}<span class="brand-name">Secure Prompt Assistant</span></div>
+    <p class="sub">Scan, explain, prompt your own assistant, and verify the fix with the same scanners.</p>
+    {% if state == "disabled" %}
+    <div class="problem" role="alert"><strong>Sign-in is disabled.</strong><span>SPA_API_KEY is not set. Set it in .env and restart.</span></div>
+    {% elif state == "locked" %}
+    <div class="problem" role="alert"><strong>Too many wrong keys.</strong><span>Sign-in is locked for a few minutes.</span></div>
+    {% else %}
+    {% if error %}<div class="problem" role="alert"><strong>{{ error }}</strong></div>{% endif %}
+    <form method="post" action="/login" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label for="key">API key</label>
+      <input id="key" name="key" type="password" autocomplete="off" spellcheck="false" maxlength="512" required autofocus>
+      <button class="btn primary" type="submit">Sign in</button>
+    </form>
+    {% endif %}
+    <p class="meta">Local only: this interface serves 127.0.0.1 and never runs a model or your code.</p>
+  </div>
+</main>
+</body>
+</html>

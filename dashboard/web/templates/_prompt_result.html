@@ -1,0 +1,17 @@
+{% import "macros.html" as m %}
+<div class="card result">
+  {% if view.warning %}
+  <div class="warn" role="status">The code in this checkout differs from the scanned version; rescan for exact context.</div>
+  {% endif %}
+  <div class="result-head">
+    <h2>Prompt · <span class="mono">{{ view.strategy }}</span> {{ strategy_name }}</h2>
+    <div class="actions">
+      <button class="btn" type="button" data-fill-from="prompt-text" data-fill-to="lint-text">Edit in the linter</button>
+      <button class="btn primary" type="button" data-copy="prompt-text">Copy prompt</button>
+    </div>
+  </div>
+  <pre class="prompt" id="prompt-text">{{ view.rendered }}</pre>
+  <p class="meta">~{{ view.tokens }} tokens · explanation from the {{ view.explanation_source }} · paste it into your assistant,
+    apply its change, commit, then <strong>Verify</strong>.</p>
+  {{ m.lint_report(view.report, "Lint of this prompt", rules) }}
+</div>

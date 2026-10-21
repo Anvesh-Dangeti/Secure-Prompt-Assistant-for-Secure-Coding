@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Findings · {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Findings</h1>
+    <p class="sub">Every tracked finding of {{ project.name }}. Open one for its evidence, lifecycle and verdicts.</p>
+  </div>
+</div>
+<form class="card filters" method="get" action="/p/{{ project.id }}/findings"
+      hx-get="/p/{{ project.id }}/findings" hx-target="#findings-table" hx-trigger="change" hx-push-url="true">
+  <input type="hidden" name="filtered" value="1">
+  <fieldset>
+    <legend>State</legend>
+    {% for s in all_states %}
+    <label class="check"><input type="checkbox" name="state" value="{{ s }}"{% if s in states %} checked{% endif %}>{{ s }}</label>
+    {% endfor %}
+  </fieldset>
+  <fieldset>
+    <legend>Severity</legend>
+    {% for s in all_severities %}
+    <label class="check"><input type="checkbox" name="severity" value="{{ s }}"{% if s in severities %} checked{% endif %}>{{ s }}</label>
+    {% endfor %}
+  </fieldset>
+  <fieldset>
+    <legend>Scanner</legend>
+    {% for t in tools %}
+    <label class="check"><input type="checkbox" name="tool" value="{{ t }}"{% if t in chosen_tools %} checked{% endif %}>{{ t }}</label>
+    {% endfor %}
+  </fieldset>
+  <noscript><button class="btn" type="submit">Apply</button></noscript>
+</form>
+<section class="card flush" id="findings-table" aria-live="polite">
+{% include "_findings_table.html" %}
+</section>
+{% endblock %}

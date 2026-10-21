@@ -5,3 +5,5 @@
 *.docx binary
 *.zip binary
 *.png binary
+# Vendored third-party script, pinned by sha256 (tests/security/test_web_safety.py): stored byte-for-byte.
+dashboard/web/static/*.min.js -text

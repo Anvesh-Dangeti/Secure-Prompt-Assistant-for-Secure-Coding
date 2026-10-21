@@ -1,0 +1,12 @@
+{% import "macros.html" as m %}
+<div class="card result">
+  {{ m.lint_report(result.report, "Lint of your prompt", rules) }}
+  {% if result.fixed is not none %}
+  <div class="result-head">
+    <h2>With fix-its applied</h2>
+    <button class="btn primary" type="button" data-copy="fixed-text">Copy</button>
+  </div>
+  <pre class="prompt" id="fixed-text">{{ result.fixed }}</pre>
+  {{ m.lint_report(result.fixed_report, "Lint after fix-its", rules) }}
+  {% endif %}
+</div>

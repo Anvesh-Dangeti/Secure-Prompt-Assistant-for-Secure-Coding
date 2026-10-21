@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Prompt & lint · {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Prompt &amp; lint</h1>
+    <p class="sub">Build the remediation prompt, paste it into your own coding assistant (Copilot, Cursor, Codex…), and lint any
+      edits before you send them. No model runs here and no tokens are spent.</p>
+  </div>
+</div>
+{% if not selected %}
+<section class="card"><p class="empty">No open findings: nothing to prompt for.</p></section>
+{% else %}
+<div class="cols-2">
+  <section class="card">
+    <h2><span class="step">1</span>Build the prompt</h2>
+    <form method="get" action="/p/{{ project.id }}/prompt" class="stack">
+      <label for="finding-pick">Finding</label>
+      <select id="finding-pick" name="finding" data-autosubmit>
+        {% for row in rows %}
+        <option value="{{ row.id }}"{% if row.id == selected.id %} selected{% endif %}>{{ row.label }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="btn" type="submit">Choose</button></noscript>
+    </form>
+    <form method="post" action="/p/{{ project.id }}/prompt" hx-post="/p/{{ project.id }}/prompt" hx-target="#prompt-result"
+          hx-disabled-elt="find button" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="finding" value="{{ selected.id }}">
+      <label for="checkout-path">Your checkout (absolute path)</label>
+      <input id="checkout-path" name="path" class="mono" maxlength="4096" required value="{{ checkout }}" spellcheck="false">
+      <label for="strategy">Strategy</label>
+      <select id="strategy" name="strategy">
+        {% for id, s in strategies.items() %}
+        <option value="{{ id }}"{% if id == default_strategy %} selected{% endif %}>{{ id }} · {{ s.name }}</option>
+        {% endfor %}
+      </select>
+      <div class="actions">
+        <button class="btn primary" type="submit">Build prompt</button>
+        <span class="htmx-indicator spinner" aria-hidden="true"></span>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2><span class="step">2</span>Lint your edited prompt</h2>
+    <p class="meta">Shortened or reworded prompts often lose their security constituents. Paste yours to check it.</p>
+    <form method="post" action="/p/{{ project.id }}/lint" hx-post="/p/{{ project.id }}/lint" hx-target="#lint-result"
+          hx-include="#checkout-path" hx-disabled-elt="find button" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="finding" value="{{ selected.id }}">
+      <label for="lint-text">Edited prompt</label>
+      <textarea id="lint-text" name="text" rows="9" maxlength="{{ max_prompt }}" spellcheck="false" class="mono"></textarea>
+      <label class="check"><input type="checkbox" name="bound" value="true" checked>Check against the selected finding (exact entity and shortening checks)</label>
+      <div class="actions">
+        <button class="btn primary" type="submit" name="fix" value="false">Lint</button>
+        <button class="btn" type="submit" name="fix" value="true">Apply fix-its</button>
+        <span class="htmx-indicator spinner" aria-hidden="true"></span>
+      </div>
+    </form>
+  </section>
+</div>
+<section id="prompt-result" aria-live="polite"></section>
+<section id="lint-result" aria-live="polite"></section>
+{% endif %}
+{% endblock %}

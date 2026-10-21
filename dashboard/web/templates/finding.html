@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}Finding #{{ d.row.id }} · {{ project.name }}{% endblock %}
+{% block content %}
+{% set r = d.row %}
+{% set ev = d.evidence %}
+<div class="page-head">
+  <div>
+    <p class="crumb"><a href="/p/{{ project.id }}/findings">Findings</a> /</p>
+    <h1>#{{ r.id }} <span class="mono">{{ r.rule }}</span></h1>
+    <p class="sub">{{ m.state_badge(r.status) }} {{ m.sev_badge(r.severity) }} <span class="mono">{{ r.file_path }}:{{ r.line or "-" }}</span></p>
+  </div>
+  <div class="head-actions">
+    {% if r.status in ("NEW", "STILL_OPEN", "REGRESSION") %}
+    <a class="btn primary" href="/p/{{ project.id }}/prompt?finding={{ r.id }}">Build the prompt</a>
+    {% endif %}
+    <a class="btn" href="/p/{{ project.id }}/verify?finding={{ r.id }}">Verify a fix</a>
+  </div>
+</div>
+
+<div class="cols-2">
+  <section class="card">
+    <h2>Scanner evidence</h2>
+    {% if ev %}
+    <dl class="fields">
+      {{ m.field("Rule", ev.tool ~ " " ~ ev.rule_id, mono=True) }}
+      {{ m.field("Message", ev.message) }}
+      {{ m.field("Location", ev.file_path ~ ":" ~ (ev.start_line or "-"), mono=True) }}
+      {{ m.field("CWE", (ev.cwe or "-") ~ "  (scanner reported " ~ (ev.cwe_reported or "-") ~ ")") }}
+      {{ m.field("OWASP", ev.owasp) }}
+      {% if ev.package %}
+      {{ m.field("Package", ev.package ~ " " ~ (ev.package_version or "")) }}
+      {{ m.field("CVEs", ev.cve_ids|join(", ")) }}
+      {{ m.field("Fixed in", ev.fix_versions|join(", ")) }}
+      {% endif %}
+    </dl>
+    <p class="meta">Snippet (secrets redacted)</p>
+    <pre class="code">{{ ev.snippet }}</pre>
+    {% else %}
+    <p class="empty">No stored evidence.</p>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <h2>Lifecycle</h2>
+    <div class="table-wrap">
+    <table class="data compact">
+      <thead><tr><th>Scan</th><th>From</th><th>To</th><th>Note</th><th>When</th></tr></thead>
+      <tbody>
+      {% for e in d.events %}
+        <tr><td>{{ "#" ~ e.scan_id if e.scan_id is not none else "manual" }}</td>
+            <td>{{ m.state_badge(e.from_status) if e.from_status else "-" }}</td>
+            <td>{{ m.state_badge("UNVERIFIED") if e.unverified else m.state_badge(e.to_status) }}</td>
+            <td>{{ e.note or "" }}</td><td class="nowrap">{{ e.created_at|when }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    <h2>False positive?</h2>
+    {% if r.status == "SUPPRESSED" %}
+    <dl class="fields">{{ m.field("Suppressed because", d.suppressed_reason) }}</dl>
+    <form method="post" action="/p/{{ project.id }}/findings/{{ r.id }}/unsuppress"
+          hx-post="/p/{{ project.id }}/findings/{{ r.id }}/unsuppress" hx-target="#suppress-result">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="btn" type="submit">Withdraw the suppression</button>
+    </form>
+    {% else %}
+    <form method="post" action="/p/{{ project.id }}/findings/{{ r.id }}/suppress"
+          hx-post="/p/{{ project.id }}/findings/{{ r.id }}/suppress" hx-target="#suppress-result" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <label for="reason">Reason (kept on record; the finding is never deleted)</label>
+      <input id="reason" name="reason" maxlength="500" minlength="{{ min_reason }}" required>
+      <div class="actions"><button class="btn" type="submit">Suppress as a false positive</button></div>
+    </form>
+    {% endif %}
+    <div id="suppress-result" aria-live="polite"></div>
+  </section>
+</div>
+
+<section class="card">
+  <h2>Verifications</h2>
+  {% for v in d.verifications %}
+  {{ m.verification_card(v) }}
+  {% else %}
+  <p class="empty">Not verified yet. <a href="/p/{{ project.id }}/verify?finding={{ r.id }}">Verify a fix</a> after you commit one.</p>
+  {% endfor %}
+</section>
+{% endblock %}

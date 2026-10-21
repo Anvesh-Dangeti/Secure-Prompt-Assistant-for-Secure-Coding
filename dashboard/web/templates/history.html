@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% import "macros.html" as m %}
+{% block title %}Scan history · {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Scan history</h1>
+    <p class="sub">Every scan of {{ project.name }} and what it changed. Source is the commit SHA for git projects and the
+      SHA-256 of the archive for uploads.</p>
+  </div>
+</div>
+{% if not scans %}
+<section class="card"><p class="empty">No scans yet.</p></section>
+{% else %}
+<section class="card">
+  <h2>Findings reported per scan</h2>
+  {{ m.line_chart(chart, "Findings reported per scan") }}
+</section>
+<section class="card flush">
+  <div class="table-wrap">
+  <table class="data">
+    <thead>
+      <tr><th>Scan</th><th>Label</th><th>Status</th><th>Source</th><th>Started</th><th class="num">Findings</th>
+        {% for t in transitions %}<th class="num">{{ t }}</th>{% endfor %}<th>Scanner problems</th></tr>
+    </thead>
+    <tbody>
+    {% for s in scans %}
+      <tr>
+        <td>#{{ s.id }}</td>
+        <td>{{ s.label or "-" }}</td>
+        <td>{{ m.scan_badge(s.status) }}</td>
+        <td class="mono">{{ (s.source_ref or "-")[:12] }}</td>
+        <td class="nowrap">{{ s.started_at|when }}</td>
+        <td class="num">{{ s.findings }}</td>
+        {% for t in transitions %}<td class="num">{{ s.transitions.get(t, 0) }}</td>{% endfor %}
+        <td>{% for tool, status in s.scanners.items() if status != "OK" %}{{ tool }}={{ status }}{{ ", " if not loop.last }}{% else %}-{% endfor %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+<section class="card">
+  <h2>Scanner runs</h2>
+  <form method="get" action="/p/{{ project.id }}/history" hx-get="/p/{{ project.id }}/history" hx-target="#runs"
+        hx-trigger="change" class="stack narrow">
+    <label for="scan-pick">Scan</label>
+    <select id="scan-pick" name="scan">
+      {% for s in scans|reverse %}<option value="{{ s.id }}"{% if s.id == chosen %} selected{% endif %}>#{{ s.id }} · {{ s.label or "no label" }}</option>{% endfor %}
+    </select>
+    <noscript><button class="btn" type="submit">Show</button></noscript>
+  </form>
+  <div id="runs" aria-live="polite">{% include "_scanner_runs.html" %}</div>
+</section>
+{% endif %}
+{% endblock %}
