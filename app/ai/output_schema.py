@@ -12,8 +12,8 @@ untrusted text, so it is validated here:
   and nothing that could smuggle in other code. A bare dotted module name
   (``os``, ``os.path``) has exactly one reading, ``import os``, and is read
   that way; it is then checked like any other entry. (The E2 pilot found the
-  local model writing ``"secrets"`` for ``"import secrets"`` under every
-  strategy, which measured the output format rather than the fix.)
+  local model writing ``"secrets"`` for ``"import secrets"`` under seven of the nine
+  strategies, which measured the output format rather than the fix.)
 
 A reply that fails any check is ``MalformedModelOutput``: recorded as a
 rejected fix, never repaired by guessing what the model meant.
