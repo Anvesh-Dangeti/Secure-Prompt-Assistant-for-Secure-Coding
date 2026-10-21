@@ -134,4 +134,5 @@ SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 
     "fixed_from_self_scan": 3,  # B607 taskkill path, the Semgrep env-taint it caused, B101 asserts
 }
 TESTS_AT_REVIEW3 = 278
-TESTS = 637
+TESTS_AT_REVIEW4 = 637        # the Review 4 pack (21 Oct); that review was cancelled
+TESTS = 743

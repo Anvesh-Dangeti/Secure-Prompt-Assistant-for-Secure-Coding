@@ -39,7 +39,7 @@ from build_review2_deck import (  # noqa: E402
 )
 from app.ai.strategies import STRATEGIES  # noqa: E402
 from evaluation.recorded_results import (  # noqa: E402
-    FIXTURE_BEHAVIOUR_TESTS, LAB_REPLAYS, LINTER, TESTS, TESTS_AT_REVIEW3, VERIFICATION,
+    FIXTURE_BEHAVIOUR_TESTS, LAB_REPLAYS, LINTER, TESTS_AT_REVIEW3, TESTS_AT_REVIEW4, VERIFICATION,
 )
 
 IMG = ROOT / "docs" / "img"
@@ -197,7 +197,7 @@ def slide_02_delivered(prs):
         [9.10, 3.00],
         row_h=0.62, body_pt=12.5, bold_rows=(2,),
     )
-    callout(s, f"{TESTS} automated tests, up from {TESTS_AT_REVIEW3} at Review 3 — and every result in this "
+    callout(s, f"{TESTS_AT_REVIEW4} automated tests, up from {TESTS_AT_REVIEW3} at Review 3 — and every result in this "
                "deck is a recorded value that a test asserts.", emphasis=True)
     slide_number(s, 2)
     notes(s, f"""
@@ -208,7 +208,7 @@ All twelve original requirements now have working code. Requirement 11 - testing
 on representative OWASP Top 10 cases and vulnerable apps - is met by the fixture
 (10 CWEs, 7 OWASP categories) and vulpy; its measured evaluation is Phase 8.
 
-{TESTS} automated tests ({TESTS_AT_REVIEW3} at Review 3). The repository is private, with
+{TESTS_AT_REVIEW4} automated tests ({TESTS_AT_REVIEW3} at Review 3). The repository is private, with
 per-phase commits.
 """)
 

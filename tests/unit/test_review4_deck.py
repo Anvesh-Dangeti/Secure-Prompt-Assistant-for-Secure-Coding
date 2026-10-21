@@ -22,7 +22,7 @@ from pptx.util import Inches  # noqa: E402
 
 import build_review2_deck as style  # noqa: E402
 import build_review4_deck as deck  # noqa: E402
-from evaluation.recorded_results import LAB_REPLAYS, LINTER, TESTS, TESTS_AT_REVIEW3, VERIFICATION  # noqa: E402
+from evaluation.recorded_results import LAB_REPLAYS, LINTER, TESTS_AT_REVIEW3, TESTS_AT_REVIEW4, VERIFICATION  # noqa: E402
 
 SLIDE_W, SLIDE_H = Inches(13.333), Inches(7.5)
 NO_NUMBER = {1, 16}
@@ -146,7 +146,7 @@ def test_screenshots_are_embedded(prs) -> None:  # noqa: ANN001
 
 def test_key_claims_present(prs) -> None:  # noqa: ANN001
     everything = "\n".join(_text(s) + s.notes_slide.notes_text_frame.text for s in prs.slides)
-    for claim in [f"{TESTS} automated tests", f"{TESTS_AT_REVIEW3} at Review 3", "no plugin", "UNVERIFIED",
+    for claim in [f"{TESTS_AT_REVIEW4} automated tests", f"{TESTS_AT_REVIEW3} at Review 3", "no plugin", "UNVERIFIED",
                   "FIX_REJECTED", "NOT_APPLICABLE", "sqli_wrong_behaviour", "Content-Security-Policy",
                   "18 November", "Copilot", "safety rate"]:
         assert claim in everything, f"missing claim: {claim}"
