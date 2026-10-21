@@ -46,7 +46,8 @@ since August 2024. See [`docs/related_tools.md`](docs/related_tools.md).
 | 5 | AI prompt assistant — context + entities, explainer, strategies S0–S8, Prompt Security Linter, providers | ✅ |
 | 6 | Triple-gate verification — developer-mode `verify` (gates 1, 2, 3a), lab-mode scratch-copy apply (+ 3b) | ✅ |
 | 7 | Dashboard — findings, prompt + copy, lint, rescan & verify, history (Streamlit, loopback only) | ✅ |
-| 8 | Evaluation — linter mutation sensitivity, S0–S8 ESR, weak vs linted prompts | ⬜ Review 5 |
+| 7b | Web interface — FastAPI + Jinja2 + htmx: session sign-in, CSRF, strict CSP; replaces the Streamlit pages | ✅ |
+| 8 | Evaluation — linter mutation sensitivity, S0–S8 ESR, weak vs linted prompts | in progress |
 | 9–10 | Hardening · final | ⬜ by 18 Nov |
 
 On the seeded fixture: **10/10 weaknesses detected**, precision 22/24; an eight-commit verification scenario
@@ -100,23 +101,26 @@ python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --strategy S7
 python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --replay evaluation/replays/sqli_good.json
 
 python -m uvicorn app.main:app --host 127.0.0.1   # API; docs at /docs, key via X-API-Key
-python -m streamlit run dashboard/streamlit_app.py # dashboard at http://127.0.0.1:8501 (run from the project root)
+python -m dashboard.web                            # web interface at http://127.0.0.1:8080 (sign in with SPA_API_KEY)
+python -m streamlit run dashboard/streamlit_app.py # previous Streamlit dashboard, until it is retired (Phase 9)
 ```
 
-## Dashboard
+## Web interface
 
-A local page over the same services as the CLI, for developer mode:
+Local pages over the same services as the CLI, for developer mode (`dashboard/web/`):
 
 | Page | What it shows / does |
 |---|---|
 | Overview | open findings by severity, lifecycle and verdict counts, open findings by OWASP category, findings per scan, what the last scan's scanners could see; scan a checkout |
-| Findings | filterable tracked findings; evidence, lifecycle events, verdicts; suppress a false positive (reason required) |
+| Findings | filterable tracked findings; a page per finding with evidence, lifecycle events and verdicts; suppress a false positive (reason required) |
 | Prompt & lint | the remediation prompt for a finding with a copy button, its lint report, and a linter for your edited prompt with fix-its |
-| Verification | rescan your checkout and run gates 1, 2, 3a; per-gate history of every verification (lab runs read-only) |
+| Verify | rescan your checkout and run gates 1, 2, 3a; per-gate remediation history (lab runs read-only) |
 | Scan history | every scan with its source (commit or archive hash), transitions and scanner status |
 
-It binds to `127.0.0.1` only (`.streamlit/config.toml`) and refuses to render otherwise, sits behind
-`SPA_API_KEY`, never runs a model or the scanned code, and shows scanned content only as literal text.
+It serves `127.0.0.1` only and refuses other peers and foreign `Host` headers (DNS rebinding), signs in with
+`SPA_API_KEY` into a signed HttpOnly SameSite=Strict session, checks a CSRF token and the Origin on every
+POST, sends a CSP without inline script or style, never runs a model or the scanned code, and shows scanned
+content only as escaped text. htmx is vendored and pinned by hash.
 
 ## Verification
 
@@ -154,11 +158,12 @@ python -m pytest -m "not scanners"  # fast: no real scanner runs
 | Context to a model | only the flagged function or ±10 lines; comments and docstrings removed; redacted; path confined to the checkout |
 | Prompt injection | repository code wrapped in random-nonce delimiters with an inert-data instruction; instruction-like text flagged |
 | Model server | loopback only; proxies and redirects ignored; bounded response; temperature 0, fixed seed |
-| Model output | schema-validated (`code`, single-statement `imports`, `summary`); anything else is a rejected fix, never repaired |
+| Model output | schema-validated (`code`, single-statement `imports` -- a bare module name reads as its `import`, `summary`); anything else is a rejected fix, never repaired |
 | Applying a fix (lab) | whole-window text splice into a scratch copy, confined to the flagged file; never committed, never applied to your checkout |
 | Running a fix (lab, gate 3b) | only after gates 1, 2, 3a pass; separate interpreter; `python -P`, pinned pytest config; allowlisted environment; timeout; CLI only, never over the API |
 | API | key on every route, fails closed when unset; body-size cap before multipart parsing; no stack traces returned |
-| Dashboard | loopback only (refuses to render otherwise); `SPA_API_KEY` gate, constant-time, lockout; scanned content never rendered as Markdown/HTML; XSRF on, telemetry off, no tracebacks in the browser; checkout paths absolute, outside scratch, optionally confined (`SPA_DASHBOARD_SOURCE_ROOT`) |
+| Web interface | loopback peer and loopback `Host` only; `SPA_API_KEY` sign-in, constant-time, process-wide lockout; signed HttpOnly SameSite=Strict session, random secret per start; CSRF token + Origin/Sec-Fetch-Site check on every POST; CSP `default-src 'none'`, scripts/styles same-origin, no inline; autoescaped templates, nothing marked safe; vendored htmx with eval off; body cap; no docs pages, no tracebacks; no lab mode |
+| Dashboard (Streamlit, until Phase 9) | loopback only (refuses to render otherwise); `SPA_API_KEY` gate, constant-time, lockout; scanned content never rendered as Markdown/HTML; XSRF on, telemetry off, no tracebacks in the browser; checkout paths absolute, outside scratch, optionally confined (`SPA_DASHBOARD_SOURCE_ROOT`) |
 
 ---
 

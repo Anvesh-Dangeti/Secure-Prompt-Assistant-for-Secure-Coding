@@ -1,0 +1,31 @@
+{% import "macros.html" as m %}
+<p class="count">{{ rows|length }} of {{ total }} tracked findings</p>
+{% if rows %}
+<div class="table-wrap">
+<table class="data">
+  <thead>
+    <tr><th>#</th><th>State</th><th>Severity</th><th>Scanner</th><th>Rule</th><th>CWE</th><th>OWASP</th>
+        <th>Location</th><th>Seen</th><th class="num">Regressions</th><th>Latest verdict</th></tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="/p/{{ project.id }}/findings/{{ r.id }}">#{{ r.id }}</a></td>
+      <td>{{ m.state_badge(r.status) }}</td>
+      <td>{{ m.sev_badge(r.severity) }}</td>
+      <td>{{ r.tool }}</td>
+      <td class="mono">{{ r.rule }}</td>
+      <td>{{ r.cwe or "-" }}</td>
+      <td>{{ r.owasp or "-" }}</td>
+      <td class="mono">{{ r.file_path }}:{{ r.line or "-" }}</td>
+      <td class="nowrap">#{{ r.first_seen }} – #{{ r.last_seen }}</td>
+      <td class="num">{{ r.regressions }}</td>
+      <td>{{ m.verdict_badge(r.verdict) if r.verdict else "-" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p class="empty">No findings match these filters.</p>
+{% endif %}

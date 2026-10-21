@@ -1,0 +1,14 @@
+{% import "macros.html" as m %}
+<div class="table-wrap">
+<table class="data">
+  <thead><tr><th>Scanner</th><th>Status</th><th>Version</th><th>Ruleset</th><th class="num">Findings</th><th class="num">Seconds</th><th>Note</th></tr></thead>
+  <tbody>
+  {% for r in runs %}
+    <tr><td>{{ r.scanner }}</td><td>{{ m.scan_badge(r.status) }}</td><td class="mono">{{ r.version }}</td>
+        <td class="mono">{{ r.ruleset }}</td><td class="num">{{ r.findings }}</td><td class="num">{{ r.seconds }}</td><td>{{ r.error }}</td></tr>
+  {% else %}
+    <tr><td colspan="7" class="empty">No scanner runs recorded for scan #{{ chosen }}.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>

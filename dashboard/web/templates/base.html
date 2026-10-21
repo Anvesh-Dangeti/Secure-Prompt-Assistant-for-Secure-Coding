@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+{% include "_head.html" %}
+<title>{% block title %}{% endblock %} · Secure Prompt Assistant</title>
+</head>
+<body>
+<header class="topbar">
+  <div class="topbar-row">
+    <a class="brand" href="/">
+      {% include "_mark.html" %}
+      <span class="brand-name">Secure Prompt Assistant</span>
+    </a>
+    <span class="chip" title="Your own coding assistant writes the fix; the scanners verify it.">Developer mode</span>
+    <div class="spacer"></div>
+    {% if projects %}
+    <form class="switcher" method="get" action="/open">
+      <label for="project-switch" class="sr-only">Project</label>
+      <select id="project-switch" name="project" data-autosubmit>
+        {% for p in projects %}
+        <option value="{{ p.id }}"{% if project and p.id == project.id %} selected{% endif %}>{{ p.name }} · {{ p.scans }} scan{{ "" if p.scans == 1 else "s" }}</option>
+        {% endfor %}
+      </select>
+      <noscript><button class="btn" type="submit">Open</button></noscript>
+    </form>
+    {% endif %}
+    <a class="btn ghost" href="/new">New scan</a>
+    <form method="post" action="/logout">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <button class="btn ghost" type="submit">Sign out</button>
+    </form>
+  </div>
+  {% if project %}
+  {% set base = "/p/" ~ project.id %}
+  <nav class="tabs" aria-label="Pages">
+    <a href="{{ base }}"{% if tab == "overview" %} aria-current="page"{% endif %}>Overview</a>
+    <a href="{{ base }}/findings"{% if tab == "findings" %} aria-current="page"{% endif %}>Findings</a>
+    <a href="{{ base }}/prompt"{% if tab == "prompt" %} aria-current="page"{% endif %}>Prompt &amp; lint</a>
+    <a href="{{ base }}/verify"{% if tab == "verify" %} aria-current="page"{% endif %}>Verify</a>
+    <a href="{{ base }}/history"{% if tab == "history" %} aria-current="page"{% endif %}>Scan history</a>
+  </nav>
+  {% endif %}
+</header>
+<main class="container">
+  {% if notice %}<div class="notice" role="status">{{ notice }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer class="container foot">The scanners and the gates decide whether a fix worked; no model ever does. Serving 127.0.0.1 only.</footer>
+</body>
+</html>

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Verify · {{ project.name }}{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Verify a fix</h1>
+    <p class="sub">A fix counts only when a fresh scan says so. Nothing on this page runs your code, and no model is asked.</p>
+  </div>
+</div>
+<ol class="gates-legend">
+  <li><span class="mono">1</span> the weakness is gone, for every scanner</li>
+  <li><span class="mono">2</span> nothing new at its severity or above</li>
+  <li><span class="mono">3a</span> the function is still intact: same signature, a real body, no new undefined names</li>
+</ol>
+{% if not selected %}
+<section class="card"><p class="empty">This project has no findings.</p></section>
+{% else %}
+<section class="card">
+  <form method="get" action="/p/{{ project.id }}/verify" class="stack narrow">
+    <label for="finding-pick">Finding</label>
+    <select id="finding-pick" name="finding" data-autosubmit>
+      {% for row in rows %}
+      <option value="{{ row.id }}"{% if row.id == selected.id %} selected{% endif %}>{{ row.label }} · {{ row.status }}</option>
+      {% endfor %}
+    </select>
+    <noscript><button class="btn" type="submit">Choose</button></noscript>
+  </form>
+</section>
+<div class="cols-2">
+  <section class="card">
+    <h2>Rescan your fix and verify</h2>
+    <form method="post" action="/p/{{ project.id }}/verify" hx-post="/p/{{ project.id }}/verify" hx-target="#verify-result"
+          hx-disabled-elt="find button" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="finding" value="{{ selected.id }}">
+      <input type="hidden" name="how" value="rescan">
+      {% if project.source_type == "zip" %}
+      <label for="checkout-path">Your fixed checkout (absolute path)</label>
+      <input id="checkout-path" name="path" class="mono" maxlength="4096" required value="{{ checkout }}" spellcheck="false">
+      {% else %}
+      <p class="meta">This project tracks a git repository: push your fix; the rescan re-clones it.</p>
+      {% endif %}
+      <div class="actions">
+        <button class="btn primary" type="submit">Rescan &amp; verify</button>
+        <span class="htmx-indicator spinner" aria-hidden="true"></span>
+        <span class="htmx-indicator meta">Rescanning with four tools…</span>
+      </div>
+    </form>
+  </section>
+  <section class="card">
+    <h2>Judge the latest scan</h2>
+    <p class="meta">Use this after scanning from the CLI or the API.</p>
+    <form method="post" action="/p/{{ project.id }}/verify" hx-post="/p/{{ project.id }}/verify" hx-target="#verify-result"
+          hx-disabled-elt="find button">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <input type="hidden" name="finding" value="{{ selected.id }}">
+      <input type="hidden" name="how" value="latest">
+      <div class="actions"><button class="btn" type="submit">Verify against the latest scan</button></div>
+    </form>
+  </section>
+</div>
+<section class="card" id="verify-result" aria-live="polite">
+{% with message=None, verdict=None %}{% include "_verify_result.html" %}{% endwith %}
+</section>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,135 @@
+{# Badges, charts and repeated blocks. A status colour always comes with a glyph and a label, never alone.
+   CSS classes come from fixed lookups here, never from a value's own text. #}
+
+{% set SEVERITY = {"CRITICAL": "critical", "HIGH": "serious", "MEDIUM": "warning", "LOW": "neutral", "INFO": "neutral"} %}
+{% set STATE = {"NEW": ("info", "+"), "STILL_OPEN": ("neutral", "•"), "RESOLVED": ("good", "✓"),
+                "REGRESSION": ("critical", "↺"), "SUPPRESSED": ("muted", "–"), "UNVERIFIED": ("warning", "?")} %}
+{% set VERDICT = {"VERIFIED_RESOLVED": ("good", "✓"), "FIX_REJECTED": ("critical", "✕"),
+                  "UNVERIFIED": ("warning", "?"), "ERROR": ("serious", "!")} %}
+{% set GATE = {"PASS": ("good", "✓"), "FAIL": ("critical", "✕"), "UNVERIFIED": ("warning", "?"),
+               "NOT_APPLICABLE": ("muted", "–"), "NOT_RUN": ("muted", "·")} %}
+{% set SCAN = {"COMPLETED": ("good", "✓"), "PARTIAL": ("warning", "!"), "FAILED": ("critical", "✕"),
+               "RUNNING": ("info", "…"), "OK": ("good", "✓"), "SKIPPED": ("muted", "–"),
+               "ERROR": ("critical", "✕"), "TIMEOUT": ("critical", "✕"), "NOT_INSTALLED": ("warning", "!")} %}
+
+{% macro badge(kind, glyph, text) %}<span class="badge {{ kind }}"><span class="glyph" aria-hidden="true">{{ glyph }}</span>{{ text }}</span>{% endmacro %}
+
+{% macro sev_badge(value) %}{{ badge(SEVERITY.get(value, "neutral"), "●", value) }}{% endmacro %}
+{% macro state_badge(value) %}{% set k = STATE.get(value, ("neutral", "•")) %}{{ badge(k[0], k[1], value) }}{% endmacro %}
+{% macro verdict_badge(value) %}{% set k = VERDICT.get(value, ("neutral", "•")) %}{{ badge(k[0], k[1], value) }}{% endmacro %}
+{% macro gate_badge(value) %}{% set k = GATE.get(value, ("neutral", "•")) %}{{ badge(k[0], k[1], value) }}{% endmacro %}
+{% macro scan_badge(value) %}{% set k = SCAN.get(value, ("neutral", "•")) %}{{ badge(k[0], k[1], value) }}{% endmacro %}
+
+{% macro field(label, value, mono=False) %}
+<div class="field"><dt>{{ label }}</dt><dd{% if mono %} class="mono"{% endif %}>{{ value if value not in (None, "") else "-" }}</dd></div>
+{% endmacro %}
+
+{# ---- charts (geometry from dashboard/web/svg.py) ---- #}
+
+{% macro hbar_chart(c, label) %}
+<svg class="chart" viewBox="0 0 {{ c.width }} {{ c.height }}" role="img" aria-label="{{ label }}">
+  {% for b in c.bars %}
+  <g class="bar-row">
+    <title>{{ b.label }}: {{ b.value }} open</title>
+    <rect class="hit" x="0" y="{{ b.label_y - 12 }}" width="{{ c.width }}" height="38"/>
+    <text class="chart-label" x="0" y="{{ b.label_y }}">{{ b.label }}</text>
+    {% if b.path %}<path class="mark" d="{{ b.path }}"/>{% endif %}
+    <text class="chart-value" x="{{ b.value_x }}" y="{{ b.value_y }}">{{ b.value }}</text>
+  </g>
+  {% endfor %}
+</svg>
+{% endmacro %}
+
+{% macro line_chart(c, label) %}
+<svg class="chart" viewBox="0 0 {{ c.width }} {{ c.height }}" role="img" aria-label="{{ label }}">
+  {% for t in c.y_ticks %}
+  <line class="{{ 'axis' if loop.first else 'grid' }}" x1="{{ c.left }}" x2="{{ c.right }}" y1="{{ t.pos }}" y2="{{ t.pos }}"/>
+  <text class="tick" x="{{ c.left - 8 }}" y="{{ t.pos + 4 }}" text-anchor="end">{{ t.text }}</text>
+  {% endfor %}
+  {% for t in c.x_ticks %}
+  <text class="tick" x="{{ t.pos }}" y="{{ c.bottom + 20 }}" text-anchor="middle">{{ t.text }}</text>
+  {% endfor %}
+  {% if c.path %}<path class="series-line" d="{{ c.path }}"/>{% endif %}
+  {% for p in c.points %}
+  <g class="point">
+    <title>{{ p.tip }}</title>
+    <circle class="hit" cx="{{ p.x }}" cy="{{ p.y }}" r="12"/>
+    <circle class="marker" cx="{{ p.x }}" cy="{{ p.y }}" r="4"/>
+  </g>
+  {% endfor %}
+  {% if c.points %}{% set last = c.points[-1] %}
+  <text class="chart-value" x="{{ last.x }}" y="{{ last.y - 12 }}" text-anchor="middle">{{ last.value }}</text>
+  {% endif %}
+</svg>
+{% endmacro %}
+
+{# ---- lint report ---- #}
+
+{% macro lint_report(r, title, rules) %}
+<div class="lint {{ 'pass' if r.passed else 'fail' }}">
+  <div class="lint-head">
+    {{ badge("good", "✓", "PASS") if r.passed else badge("critical", "✕", "FAIL") }}
+    <strong>{{ title }}</strong>
+    <span class="meta">constituents {{ r.constituent_score|pct }} · ~{{ r.tokens }} tokens · {{ "bound to the finding" if r.bound else "unbound (no finding to check against)" }}</span>
+  </div>
+  <div class="table-wrap">
+  <table class="data compact">
+    <thead><tr><th>Rule</th><th>Result</th><th>What it checks</th></tr></thead>
+    <tbody>
+    {% for rule, present in r.constituents.items() %}
+      <tr><td class="mono">{{ rule }}</td>
+          <td>{{ badge("good", "✓", "ok") if present is true else (badge("critical", "✕", "MISSING") if present is false else badge("muted", "–", "n/a")) }}</td>
+          <td>{{ rules.get(rule, "") }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% if r.issues %}
+  <div class="table-wrap">
+  <table class="data compact issues">
+    <thead><tr><th>Rule</th><th>Severity</th><th>Problem</th><th>Fix-it</th></tr></thead>
+    <tbody>
+    {% for i in r.issues %}
+      <tr><td class="mono">{{ i.rule }}</td><td>{{ i.severity }}</td><td>{{ i.message }}</td><td>{{ i.fix or "" }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+</div>
+{% endmacro %}
+
+{# ---- one verification ---- #}
+
+{% macro verification_card(v) %}
+<article class="vcard">
+  <header>
+    {{ verdict_badge(v.verdict) }}
+    <strong>Verification #{{ v.id }}</strong>
+    <span class="meta">
+      {% if v.mode == "developer" %}developer mode · scan #{{ v.before_scan_id }} → scan #{{ v.after_scan_id }}
+      {% else %}lab mode · {{ v.strategy or "-" }} · {{ v.model or "-" }} · {{ v.calls }} model call{{ "" if v.calls == 1 else "s" }} · {{ v.prompt_tokens or 0 }} + {{ v.completion_tokens or 0 }} tokens{% endif %}
+      · {{ v.created_at|when }}
+    </span>
+  </header>
+  {% if v.reason %}<p class="reason">{{ v.reason }}</p>{% endif %}
+  <div class="table-wrap">
+  <table class="data compact gates">
+    <thead><tr><th>Gate</th><th>Check</th><th>Result</th><th>Detail</th></tr></thead>
+    <tbody>
+    {% for g in v.gates %}
+      <tr><td class="mono">{{ g.get("gate", "") }}</td><td>{{ g.get("title", "") }}</td><td>{{ gate_badge(g.get("status", "")) }}</td><td>{{ g.get("detail", "") }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <details>
+    <summary>Findings in this weakness, and gate details</summary>
+    <pre class="plain">{{ v.target|join("\n") }}</pre>
+    {% for g in v.gates if g.get("items") %}
+    <p class="meta">Gate {{ g.get("gate", "") }}</p>
+    <pre class="plain">{{ g.get("items")|join("\n") }}</pre>
+    {% endfor %}
+  </details>
+</article>
+{% endmacro %}

@@ -1,0 +1,10 @@
+{% import "macros.html" as m %}
+{% if message %}
+<div class="verdict-line" role="status">{{ m.verdict_badge(verdict) }}<span>{{ message }}</span></div>
+{% endif %}
+<h2>Remediation history</h2>
+{% for v in history %}
+{{ m.verification_card(v) }}
+{% else %}
+<p class="empty">No verifications for this finding yet.</p>
+{% endfor %}

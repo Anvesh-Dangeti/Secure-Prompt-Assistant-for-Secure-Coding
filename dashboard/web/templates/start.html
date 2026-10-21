@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Scan a checkout{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Scan a checkout</h1>
+    <p class="sub">Semgrep, Bandit, Gitleaks and pip-audit run on a copy of your code. Your files are never modified and nothing in them is executed.</p>
+  </div>
+</div>
+<section class="card narrow">
+  <form method="post" action="/scan" hx-post="/scan" hx-target="#scan-result" hx-disabled-elt="find button" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label for="name">Project name</label>
+    <input id="name" name="name" maxlength="200" required placeholder="myapp">
+    <label for="path">Checkout to scan (absolute path)</label>
+    <input id="path" name="path" class="mono" maxlength="4096" required value="{{ checkout }}" placeholder="D:\code\myapp" spellcheck="false">
+    <label for="label">Label (optional)</label>
+    <input id="label" name="label" maxlength="120" placeholder="before the fix">
+    <div class="actions">
+      <button class="btn primary" type="submit">Scan</button>
+      <span class="htmx-indicator spinner" aria-hidden="true"></span>
+      <span class="htmx-indicator meta">Scanning with four tools…</span>
+    </div>
+  </form>
+  <div id="scan-result" aria-live="polite"></div>
+</section>
+{% endblock %}
