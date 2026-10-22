@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import threading
+
 import pytest
 
+from dashboard.web import __main__ as entry
 from dashboard.web import security, svg
 
 
@@ -56,3 +59,61 @@ def test_the_throttle_locks_after_five_failures_and_reopens(monkeypatch: pytest.
     assert throttle.locked()
     now[0] += security.LOCKOUT_S + 1
     assert not throttle.locked() and throttle.failures == 0
+
+
+# ---- starting and stopping the server (python -m dashboard.web) ----------------------------------
+
+
+def test_the_server_is_started_loopback_only_with_a_bounded_shutdown(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict = {}
+    monkeypatch.setattr(entry.uvicorn, "run", lambda app, **kwargs: seen.update(kwargs))
+    entry.main(["--port", "8081"])
+    assert seen["host"] == "127.0.0.1" and seen["port"] == 8081 and seen["proxy_headers"] is False
+    assert seen["timeout_graceful_shutdown"] == entry.SHUTDOWN_GRACE_S == 5      # Ctrl+C never waits on open tabs
+    assert seen["loop"] == "asyncio:SelectorEventLoop"                           # no Proactor reset noise on Windows
+    assert seen["access_log"] is False and seen["log_level"] == "info"           # start/stop shown, paths never logged
+
+
+@pytest.mark.parametrize("port", ["80", "70000"])
+def test_privileged_or_impossible_ports_are_refused(port: str) -> None:
+    with pytest.raises(SystemExit):
+        entry.main(["--port", port])
+
+
+def test_ctrl_c_ends_cleanly_without_a_traceback(monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
+    def interrupted(app, **kwargs) -> None:  # noqa: ANN001
+        raise KeyboardInterrupt              # uvicorn re-raises Ctrl+C after its graceful shutdown
+
+    monkeypatch.setattr(entry.uvicorn, "run", interrupted)
+    entry.main(["--port", "8081"])
+    assert capsys.readouterr().out.rstrip().endswith("Stopped.")
+
+
+def test_a_scan_still_running_is_announced_and_awaited(capsys: pytest.CaptureFixture) -> None:
+    release = threading.Event()
+    worker = threading.Thread(target=release.wait, daemon=False)
+    worker.start()
+    threading.Timer(0.3, release.set).start()
+    entry._wait_for_running_work()
+    assert not worker.is_alive() and "Waiting for the running scan to finish" in capsys.readouterr().out
+
+
+def test_a_second_ctrl_c_abandons_the_running_scan(monkeypatch: pytest.MonkeyPatch,
+                                                   capsys: pytest.CaptureFixture) -> None:
+    release = threading.Event()
+    worker = threading.Thread(target=release.wait, daemon=False)
+    worker.start()
+    exits: list[int] = []
+
+    def join(self, timeout=None) -> None:  # noqa: ANN001
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(threading.Thread, "join", join)
+    monkeypatch.setattr(entry.os, "_exit", exits.append)
+    try:
+        entry._wait_for_running_work()
+    finally:
+        monkeypatch.undo()
+        release.set()
+        worker.join()
+    assert exits == [130] and "the running scan was abandoned" in capsys.readouterr().out
