@@ -57,7 +57,10 @@ python -m dashboard.web
 
 * `myapp` is the copy we scan and "fix". `stub` holds a fake fix: `ping_host` emptied to `pass`. `fixed` holds
   a real one: an argument list, no shell. Both are made by the same edit functions as `scripts/demo_verify.py`.
-* The server prints `http://127.0.0.1:8080`. Leave this window running.
+* The server prints `http://127.0.0.1:8080`. Leave this window running. To stop it, press Ctrl+C once: it prints
+  *Shutting down* and *Stopped.* within 5 seconds. If a scan is still running it says so, and a second Ctrl+C
+  abandons it. If nothing reacts, check the window title for "Select": a click puts a Windows console into
+  selection mode, which pauses the program and makes Ctrl+C copy text instead. Press Esc, then Ctrl+C.
 * In the browser, open `http://127.0.0.1:8080` and sign in with `SPA_API_KEY` from `.env`. The start page
   says "Scan a checkout".
 

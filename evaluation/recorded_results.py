@@ -135,4 +135,4 @@ SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 
 }
 TESTS_AT_REVIEW3 = 278
 TESTS_AT_REVIEW4 = 637        # the Review 4 pack (21 Oct); that review was cancelled
-TESTS = 743
+TESTS = 749
