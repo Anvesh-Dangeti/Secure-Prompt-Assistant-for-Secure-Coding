@@ -18,7 +18,6 @@ uvicorn==0.54.0
 python-multipart==0.0.32        # multipart parsing for ZIP uploads and the web interface's forms
 
 # ---- web interface (Phase 7b): server-rendered pages, signed session cookie ----
-# Pinned here although Streamlit also pulls them in: they must survive its removal.
 Jinja2==3.1.6                   # templates, autoescaping forced on (dashboard/web/render.py)
 itsdangerous==2.2.0             # signs the session cookie (Starlette SessionMiddleware)
 
@@ -48,7 +47,9 @@ pytest==9.1.1
 # ---- review deck generator (scripts/build_review*_deck.py) -------------------
 python-pptx==1.0.2
 
-# ---- dashboard (Phase 7) -------------------------------------------------------
-# Local, loopback-only UI over the same services as the CLI (dashboard/).
-# Its transitive dependencies are audited with pip-audit after every change.
-streamlit==1.65.0
+# ---- security floors for transitive dependencies (pip-audit, Phase 9) -------
+# Neither is reachable from untrusted input here, but a pinned floor keeps the
+# audit of the frozen environment clean. Pillow 13 became possible once the
+# Streamlit dashboard (which capped pillow<13) was retired for the web interface.
+pillow==13.0.0                  # via python-pptx; 12.3.0 had 8 advisories
+certifi==2026.10.19             # via httpx; PYSEC-2026-4320 fixed in this release
