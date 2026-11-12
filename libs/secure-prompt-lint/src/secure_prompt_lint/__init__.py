@@ -34,7 +34,7 @@ from secure_prompt_lint.rules import RuleContext, describe_rules, register_rule,
 from secure_prompt_lint.tokens import estimate_tokens
 from secure_prompt_lint.vocabulary import load_vocabulary, use_vocabulary
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = [
     "CONSTITUENTS", "ERROR", "INERT_INSTRUCTION", "RULES", "WARNING", "LintExpectation", "LintIssue", "LintReport",

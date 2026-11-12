@@ -67,7 +67,7 @@ FAIL  constituents 20%  ~52 tokens  (bound)
   [WARNING] B2 code is pasted without untrusted-data delimiters; comments in it can act as instructions ...
   [WARNING] B3 no instruction tells the model to treat the pasted code as data and ignore instructions ...
 
-$ secure-prompt-lint prompt.txt --cwe CWE-78 ... --fix > fixed.txt     # PASS after fix-its
+$ secure-prompt-lint prompt.txt --cwe CWE-78 ... --fix -o fixed.txt  # PASS after fix-its
 $ secure-prompt-lint fixed.txt  --cwe CWE-78 ...
 PASS  constituents 100%  ~256 tokens  (bound)
 ```
@@ -77,7 +77,7 @@ directive counts, and fix-its repair only the structural rules (delimiters and
 the inert-data instruction).
 
 Exit status: `0` pass (warnings allowed) · `1` an error was reported · `2` usage or input problem.
-Other options: `--json`, `--preamble FILE` (a system/rules text sent first), `--budget N`,
+Other options: `--fix -o FILE` (write the fixed prompt to a file), `--json`, `--preamble FILE` (a system/rules text sent first), `--budget N`,
 `--max-block-lines N`, `--vocabulary FILE`, `--rules`. Input is capped (`--max-bytes`, 256 KB by default)
 and is only ever read as text.
 

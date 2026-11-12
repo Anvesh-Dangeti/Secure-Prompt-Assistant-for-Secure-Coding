@@ -3,7 +3,7 @@
     secure-prompt-lint prompt.txt
     secure-prompt-lint prompt.txt --cwe CWE-78 --entity host --entity subprocess.check_output --location app.py
     cat prompt.txt | secure-prompt-lint - --json
-    secure-prompt-lint prompt.txt --fix > fixed.txt
+    secure-prompt-lint prompt.txt --cwe CWE-78 --entity host --fix -o fixed.txt
     secure-prompt-lint --rules
 
 Exit status: 0 when the prompt passes (warnings allowed), 1 when any rule
@@ -52,7 +52,8 @@ def read_prompt(source: str, max_bytes: int) -> str:
     if len(data) > max_bytes:
         raise InputError(f"the prompt is larger than {max_bytes} bytes")
     try:
-        return data.decode("utf-8")
+        # utf-8-sig: Windows editors and PowerShell often start UTF-8 files with a byte-order mark.
+        return data.decode("utf-8-sig")
     except UnicodeDecodeError as exc:
         raise InputError("the prompt is not UTF-8 text") from exc
 
@@ -69,6 +70,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--max-block-lines", type=int, default=DEFAULT_MAX_BLOCK_LINES, help="limit for rule B4")
     p.add_argument("--max-bytes", type=int, default=DEFAULT_MAX_BYTES, help="refuse larger input")
     p.add_argument("--fix", action="store_true", help="print the prompt with every automatic fix applied")
+    p.add_argument("-o", "--output", help="with --fix: write the fixed prompt to this file (UTF-8) instead of stdout")
     p.add_argument("--json", action="store_true", help="print the report as JSON")
     p.add_argument("--rules", action="store_true", help="list the rules and exit")
     p.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -111,9 +113,20 @@ def main(argv: list[str] | None = None) -> int:
     exp = expectation(args.cwe, entities=args.entity, locations=args.location, token_budget=args.budget,
                       max_block_lines=args.max_block_lines)
     report = lint(text, exp, preamble=preamble)
+    if args.output and not args.fix:
+        print("secure-prompt-lint: error: --output needs --fix", file=sys.stderr)
+        return EXIT_USAGE
     if args.fix:
         fixed = apply_fixes(text, report, exp)
-        sys.stdout.write(fixed if fixed.endswith("\n") else fixed + "\n")
+        fixed = fixed if fixed.endswith("\n") else fixed + "\n"
+        if args.output:
+            try:
+                Path(args.output).write_text(fixed, encoding="utf-8", newline="\n")
+            except OSError as exc:
+                print(f"secure-prompt-lint: error: {exc}", file=sys.stderr)
+                return EXIT_USAGE
+        else:
+            sys.stdout.write(fixed)
         after = lint(fixed, exp, preamble=preamble)
         print(f"secure-prompt-lint: {'PASS' if after.passed else 'FAIL'} after fix-its "
               f"({len(after.errors)} error(s) left)", file=sys.stderr)

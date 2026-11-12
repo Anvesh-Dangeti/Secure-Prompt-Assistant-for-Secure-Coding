@@ -36,6 +36,16 @@ def test_fix_repairs_it_and_the_result_passes(prompt_file, tmp_path, capsys) -> 
     assert main([str(fixed), *BOUND]) == EXIT_PASS
 
 
+def test_fix_to_a_file_and_a_byte_order_mark_is_accepted(tmp_path, capsys) -> None:  # noqa: ANN001
+    bom = tmp_path / "bom.txt"
+    bom.write_bytes(b"\xef\xbb\xbf" + ONE_LINER.encode("utf-8"))        # as Windows tools often save UTF-8
+    out = tmp_path / "fixed.txt"
+    assert main([str(bom), *BOUND, "--fix", "-o", str(out)]) == EXIT_PASS
+    assert capsys.readouterr().out == ""                                 # nothing on stdout with --output
+    assert main([str(out), *BOUND]) == EXIT_PASS
+    assert main([str(bom), "-o", str(out)]) == EXIT_USAGE                # --output only makes sense with --fix
+
+
 def test_json_output(prompt_file, capsys) -> None:  # noqa: ANN001
     main([str(prompt_file), "--json"])
     data = json.loads(capsys.readouterr().out)
