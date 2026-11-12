@@ -34,7 +34,7 @@ from sqlalchemy import select
 from app.ai.providers import get_provider
 from app.ai.providers.base import ProviderError
 from app.ai.providers.ollama import loopback_base_url
-from app.ai.strategies import STRATEGIES
+from app.ai.strategies import COMPARED, STRATEGIES
 from app.cli import zip_directory
 from app.core.config import get_settings
 from app.core.scratch import scratch_dir
@@ -187,8 +187,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m evaluation.e2_strategies", description=__doc__.split("\n")[0])
     parser.add_argument("--out", required=True, type=Path, help="results file (JSON), rewritten after every trial")
     parser.add_argument("--resume", action="store_true", help="keep the trials already in --out and run the rest")
-    parser.add_argument("--strategies", default=",".join(STRATEGIES), help="comma-separated, default S0..S8")
+    parser.add_argument("--strategies", default=",".join(COMPARED),
+                        help="comma-separated, default S0..S8 (the token ladder adds S7a, S7m)")
     parser.add_argument("--seeds", help="comma-separated ground-truth ids (default: all ten)")
+    parser.add_argument("--label", default="E2 pilot -- S0..S8, one trial per (weakness, strategy), local model",
+                        help="experiment description stored in the results file")
     args = parser.parse_args(argv)
 
     strategies = [s.strip() for s in args.strategies.split(",") if s.strip()]
@@ -217,7 +220,7 @@ def main(argv: list[str] | None = None) -> int:
     trials: list[dict] = list(previous.get("trials", []))
     done = {(t["seed"], t["strategy"]) for t in trials}
     payload = {
-        "experiment": "E2 pilot -- S0..S8, one trial per (weakness, strategy), local model",
+        "experiment": previous.get("experiment") or args.label,
         "fixture": "fixtures/flask_vuln_app",
         "started": previous.get("started") or datetime.now(UTC).isoformat(timespec="seconds"),
         "finished": None,

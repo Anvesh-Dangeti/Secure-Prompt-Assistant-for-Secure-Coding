@@ -1,14 +1,17 @@
-"""Strategies S0-S8: each has its defining cue, and only the security guidance varies."""
+"""Strategies S0-S8: each has its defining cue, and only the security guidance varies.
+
+Plus the token-ladder variants of S7 (S7a, S7m), which keep every linted constituent.
+"""
 
 from __future__ import annotations
 
 import pytest
 
 from app.ai import sentences
-from app.ai.delimiting import INERT_INSTRUCTION
+from app.ai.delimiting import INERT_INSTRUCTION, wrap_untrusted
 from app.ai.guidance import all_guidance, guidance_for
 from app.ai.prompt_builder import PromptRejected, build_prompt
-from app.ai.strategies import STRATEGIES, get_strategy
+from app.ai.strategies import COMPARED, LADDER, STRATEGIES, StrategyInput, get_strategy
 from app.ai.strategies import ours as ours_module
 from tests._ai_support import NONCE, context
 
@@ -16,15 +19,17 @@ SQL = context("B608")
 PLANS = {sid: build_prompt(SQL, sid, nonce=NONCE) for sid in STRATEGIES}
 
 
-def test_registry_is_s0_to_s8_and_only_s7_is_enforced() -> None:
-    assert list(STRATEGIES) == [f"S{i}" for i in range(9)]
-    assert [s.id for s in STRATEGIES.values() if s.enforce_lint] == ["S7"]
+def test_registry_is_s0_to_s8_plus_the_ladder_and_only_ours_are_enforced() -> None:
+    assert list(COMPARED) == [f"S{i}" for i in range(9)]
+    assert set(STRATEGIES) == set(COMPARED) | set(LADDER)
+    assert [s.id for s in STRATEGIES.values() if s.enforce_lint] == ["S7", "S7a", "S7m"]
     assert get_strategy(" s5 ").id == "S5"
+    assert get_strategy("s7M").id == "S7m"
     with pytest.raises(ValueError, match="unknown strategy"):
         get_strategy("S9")
 
 
-@pytest.mark.parametrize("sid", list(STRATEGIES))
+@pytest.mark.parametrize("sid", [*COMPARED, "S7a"])
 def test_the_security_envelope_is_identical_in_every_strategy(sid: str) -> None:
     first = PLANS[sid].messages[0]
     for part in (sentences.scope(SQL), INERT_INSTRUCTION, sentences.output_contract(SQL), SQL.code,
@@ -101,3 +106,39 @@ def test_s7_reads_well_for_non_function_findings(rule: str) -> None:
     g = guidance_for(ctx.cwe)
     assert first.startswith(f"Fix the {g.name} ({g.cwe})")
     assert "{" not in first.split("<untrusted_code")[0], "no unfilled template slot"
+
+
+def test_s7a_is_s7_without_the_review_turns() -> None:
+    assert PLANS["S7a"].messages == PLANS["S7"].messages[:1]
+
+
+def test_s7m_keeps_every_constituent_in_a_compact_envelope() -> None:
+    plan = PLANS["S7m"]
+    first = plan.messages[0]
+    assert len(plan.messages) == 1 and plan.lint.passed and not plan.lint.warnings
+    assert plan.lint.constituent_score == 1.0
+    g = guidance_for(SQL.cwe)
+    for part in (sentences.opening(SQL, g), sentences.directive(SQL, g), sentences.guard(SQL, g),
+                 sentences.scope_compact(SQL), sentences.INERT_COMPACT, SQL.code,
+                 sentences.output_contract_compact(SQL)):
+        assert part in first
+    assert "Why it matters" not in first and "Classification" not in first
+    assert plan.lint.tokens < PLANS["S7a"].lint.tokens
+
+
+def test_s7m_adds_the_binding_only_when_the_opening_lacks_the_entity(monkeypatch: pytest.MonkeyPatch) -> None:
+    g = guidance_for(SQL.cwe)
+    binding = sentences.binding(SQL, g)
+    assert binding not in PLANS["S7m"].messages[0]
+    monkeypatch.setattr(ours_module.sentences, "opening", lambda ctx, g: "Fix the SQL injection in app.py.")
+    monkeypatch.setattr(ours_module.sentences, "directive", lambda ctx, g: "Use a parameterised query.")
+    monkeypatch.setattr(ours_module.sentences, "guard", lambda ctx, g: "Run it only after binding the value.")
+    block = wrap_untrusted(SQL.code, SQL.file_path, SQL.lines_label, NONCE)
+    _, messages = get_strategy("S7m").build(StrategyInput(SQL, g, PLANS["S7m"].explanation, block))
+    assert binding in messages[0]
+
+
+def test_s7m_fails_closed_like_s7(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(ours_module.sentences, "guard", lambda ctx, g: "Be careful.")
+    with pytest.raises(PromptRejected, match="A2"):
+        build_prompt(SQL, "S7m")

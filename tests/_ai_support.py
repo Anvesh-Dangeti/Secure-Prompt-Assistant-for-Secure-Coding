@@ -30,8 +30,9 @@ def finding(rule_suffix: str) -> NormalizedFinding:
 
 
 def context(rule_suffix: str, root: Path = FIXTURE) -> FindingContext:
-    return extract_context(finding(rule_suffix), root)
+    return extract_context(finding(rule_suffix), root, group=recorded_findings())
 
 
 def all_contexts() -> list[FindingContext]:
-    return [extract_context(f, FIXTURE) for f in recorded_findings()]
+    found = recorded_findings()
+    return [extract_context(f, FIXTURE, group=found) for f in found]

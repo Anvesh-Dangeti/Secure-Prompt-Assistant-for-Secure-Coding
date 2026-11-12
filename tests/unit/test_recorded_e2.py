@@ -11,7 +11,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from app.ai.strategies import STRATEGIES
+from app.ai.strategies import COMPARED
 from evaluation.e2_strategies import NO_USABLE_FIX, summarise
 from evaluation.recorded_results import E2_PILOT
 
@@ -23,7 +23,7 @@ STRICT = json.loads((RESULTS / "e2_pilot_strict_imports.json").read_text(encodin
 def test_every_cell_ran_exactly_once() -> None:
     cells = Counter((t["seed"], t["strategy"]) for t in PILOT["trials"])
     assert len(cells) == E2_PILOT["trials"] == len(PILOT["trials"]) and set(cells.values()) == {1}
-    assert {s for _, s in cells} == set(STRATEGIES)
+    assert {s for _, s in cells} == set(COMPARED)
 
 
 def test_the_stored_summary_is_recomputed_from_the_trials() -> None:

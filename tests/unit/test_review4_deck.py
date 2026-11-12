@@ -129,7 +129,7 @@ def test_strategy_table_and_linter_numbers(prs) -> None:  # noqa: ANN001
         passed, score = LINTER["by_strategy"][cells[0]]
         assert cells[-2:] == [f"{passed} / {n}", f"{score:.2f}"], cells[0]
     text = _text(prs.slides[5])
-    lo, hi = LINTER["s7_tokens"]
+    lo, hi = LINTER["s7_tokens_at_review4"]
     assert f"S7 passes {LINTER['by_strategy']['S7'][0]}/{n}" in text
     assert f"fix-its repair S0 on {LINTER['fixits_repair_s0']}/{n}" in text and f"{lo}–{hi} tokens" in text
 

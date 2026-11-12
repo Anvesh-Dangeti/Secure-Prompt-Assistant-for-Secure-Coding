@@ -61,7 +61,18 @@ def test_dependency_context_is_only_the_requirement_line() -> None:
     ctx = context("PYSEC-2021-142")
     assert ctx.window_kind == "dependency"
     assert ctx.code == "PyYAML==5.3"
-    assert ctx.fixed_version == "5.4" and ctx.vulns == ("CVE-2020-14343",)
+    assert ctx.fixed_version == "5.4"
+    assert ctx.vulns[0] == "CVE-2020-14343" and set(ctx.vulns) == {"CVE-2020-14343", "CVE-2020-1747", "CVE-2025-50460"}
+
+
+def test_dependency_fix_version_covers_every_advisory_in_the_group() -> None:
+    # Finding 23 (E2 pilot): the PYSEC-2020-96 prompt said "5.3.1 or later"; every model took 5.3.1 literally,
+    # which still carries PYSEC-2021-142, so gate 1 rejected all nine dependency fixes.
+    alone = extract_context(finding("PYSEC-2020-96"), FIXTURE)
+    assert alone.fixed_version == "5.3.1"
+    grouped = context("PYSEC-2020-96")
+    assert grouped.fixed_version == "5.4"
+    assert "CVE-2020-14343" in grouped.vulns
 
 
 def test_dependency_line_is_found_by_name_when_the_scanner_gave_none() -> None:

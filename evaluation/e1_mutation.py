@@ -53,7 +53,8 @@ UNCHECKED = ("explanation", "classification", "untrusted code", "output contract
 
 def contexts() -> list[FindingContext]:
     raw = json.loads(RECORDED.read_text(encoding="utf-8"))
-    return [extract_context(NormalizedFinding(**f), FIXTURE) for f in raw]
+    findings = [NormalizedFinding(**f) for f in raw]
+    return [extract_context(f, FIXTURE, group=findings) for f in findings]
 
 
 def _paragraphs(text: str) -> list[str]:

@@ -69,10 +69,15 @@ LINTER = {
     "by_strategy": {
         "S0": (0, 0.38), "S1": (0, 0.38), "S2": (1, 0.72), "S3": (0, 0.45), "S4": (0, 0.38),
         "S5": (0, 0.38), "S6": (0, 0.38), "S7": (24, 1.0), "S8": (1, 0.71),
+        # token-ladder variants (12 Nov): both keep every constituent
+        "S7a": (24, 1.0), "S7m": (24, 1.0),
     },
     "s0_score_range": (0.2, 0.6),   # S0 quotes the scanner: Semgrep's messages carry hints, Bandit's do not
     "fixits_repair_s0": 24,         # S0 prompts that pass after the linter's fix-its are applied
-    "s7_tokens": (255, 373),        # estimated tokens in S7's first message, min and max
+    "s7_tokens": (279, 373),        # estimated tokens in S7's first message, min and max
+    # As shown at Review 4 and mid-sem. The minimum rose from 255 to 279 on 12 Nov, when the dependency
+    # prompts began naming every advisory on the package (finding 23); no other prompt changed.
+    "s7_tokens_at_review4": (255, 373),
 }
 
 # ---- E1: linter mutation sensitivity (asserted; no model) ---------------------
@@ -115,6 +120,59 @@ E2_PILOT = {
     "failed_at": {"1": 22, "3a": 2, "3b": 7},   # where the 31 rejected fixes were stopped
     "dependency_bumps_rejected": 9,             # every strategy pinned PyYAML 5.3.1; PYSEC-2021-142 needs 5.4
     "strict_imports_reply_failures": 10,        # first run (e2_pilot_strict_imports.json), before the fix
+}
+
+# ---- E5 (static): the token ladder over the 24 real findings (asserted; no model) ---------
+# evaluation/e5_tokens.py. Estimated tokens, (min, median, max). S7a = S7 without its two review turns;
+# S7m = only what the linter requires, compact envelope. "typed" = every message the developer pastes.
+E5_STATIC = {
+    "findings": 24,
+    "passes_lint": {"S7": 24, "S7a": 24, "S7m": 24, "S2": 1},
+    "first_message": {"S7": (279, 334, 373), "S7a": (279, 334, 373), "S7m": (142, 199, 234), "S2": (207, 308, 423)},
+    "typed": {"S7": (358, 439, 475), "S7a": (279, 334, 373), "S7m": (142, 199, 234), "S2": (207, 308, 423)},
+    # S7's first message, median tokens per paragraph
+    "s7_parts": {"opening": 28, "explanation": 56, "directive": 38, "guard": 26, "classification": 17,
+                 "scope": 37, "inert-data instruction": 47, "untrusted code": 54, "output contract": 35},
+    "code_block": (30, 54, 90),       # the delimited code alone: what no variant can remove
+    "s7m_saving_vs_s7a": 0.42,
+}
+
+# ---- E5 (live): the token ladder on the local model (recorded 12 Nov 2026) ---------------
+# python -m evaluation.e2_strategies --strategies S2,S7,S7a,S7m --out evaluation/results/e5_tokens.json
+# 10 seeded weaknesses x 4 strategies, same model, settings, scanners and gates as the E2 pilot, after the
+# finding-23 fix. Asserted from the committed rows by tests/unit/test_recorded_e5.py.
+E5 = {
+    "trials": 40,
+    "model": "qwen2.5-coder:7b-instruct",
+    "digest": "dae161e27b0e",
+    # strategy -> (verified, applicable, ESR, prompt + completion tokens over its ten trials)
+    "by_strategy": {
+        "S7": (8, 10, 0.8, 22201), "S7a": (9, 10, 0.9, 4989), "S7m": (9, 10, 0.9, 3803), "S2": (9, 10, 0.9, 4254),
+    },
+    "verified_per_1k_tokens": {"S7": 0.36, "S7a": 1.8, "S7m": 2.37, "S2": 2.12},
+    "tokens_per_trial": {"S7": 2220, "S7a": 499, "S7m": 380, "S2": 425},   # rounded mean, whole conversation
+    "failed_at": {"S7": {"1": 1, "3a": 1}, "S7a": {"3a": 1}, "S7m": {"3a": 1}, "S2": {"1": 1}},
+    # Finding 23 fixed: every rung of ours now upgrades PyYAML to 5.4 (S2, whose prompt names no version, does not)
+    "dependency_verified": {"S7": True, "S7a": True, "S7m": True, "S2": False},
+    # One cell (GT-09, S7) first ended in ERROR -- "provider: model server timed out", an infrastructure
+    # failure, not a model answer. It was re-run alone with --resume; the first attempt is kept as
+    # evaluation/results/e5_tokens_attempt1.json.
+    "infrastructure_reruns": 1,
+}
+
+# ---- related functions: evidence from the E2 pilot's 90 trials (asserted; no new run) -------
+# evaluation/related_functions.py. Does a fix to one function break the code that calls it?
+RELATED = {
+    "callers": {"hash_password": ["register"], "make_reset_token": ["register"]},
+    "trials_on_helpers_with_callers": 18,
+    "verified_on_helpers_with_callers": 13,          # each passed the behaviour tests that exercise `register`
+    "rejected_on_helpers_with_callers_by_gate": {"1": 5},   # weakness still present; none broke the caller
+    "caller_broken_by_a_verified_fix": 0,
+    "scanner_clean_but_behaviour_broken": 7,         # caught only by gate 3b (lab mode)
+    "behaviour_broken_by_cwe": {"CWE-79": 5, "CWE-798": 1, "CWE-89": 1},
+    # one-function edits whose damage reached the whole module: every test errors, or the file stops parsing
+    "module_wide_breaks": {"tests_error": 2, "file_no_longer_parses": 2},
+    "module_wide_examples": ["S5 on API_TOKEN", "S5 on download_file", "S5 on get_user", "S7 on greet"],
 }
 
 # ---- snapshots (recorded 8 Oct 2026, not asserted) -------------------------

@@ -37,7 +37,7 @@ from build_review2_deck import (  # noqa: E402
     add_slide, badge, callout, data_table, headline, mono_block, notes, section_label, slide_number, textbox,
     write,
 )
-from app.ai.strategies import STRATEGIES  # noqa: E402
+from app.ai.strategies import COMPARED, STRATEGIES  # noqa: E402
 from evaluation.recorded_results import (  # noqa: E402
     FIXTURE_BEHAVIOUR_TESTS, LAB_REPLAYS, LINTER, TESTS_AT_REVIEW3, TESTS_AT_REVIEW4, VERIFICATION,
 )
@@ -292,13 +292,14 @@ def slide_05_strategies(prs):
     section_label(s, "Prompt strategies")
     headline(s, "Nine strategies, one security envelope")
     rows = []
-    for sid, strategy in STRATEGIES.items():
+    for sid in COMPARED:
+        strategy = STRATEGIES[sid]
         passed, score = LINTER["by_strategy"][sid]
         rows.append([sid, strategy.name, strategy.summary, strategy.origin,
                      f"{passed} / {LINTER['findings']}", f"{score:.2f}"])
     data_table(s, ["ID", "Strategy", "What it adds", "Source", "Passes lint", "Constituents"], rows,
                [0.60, 1.95, 4.00, 3.30, 1.05, 1.20], row_h=0.40, header_pt=11, body_pt=10.5,
-               bold_rows=(list(STRATEGIES).index("S7"),))
+               bold_rows=(COMPARED.index("S7"),))
     callout(s, "Delimiters, the inert-data instruction, the scope limit and the output contract are identical in "
                "all nine — only the guidance varies. This scores the prompts, not the fixes: which strategy "
                "yields verified fixes is Phase 8 (E2).", y=6.20, h=0.70, size=12)
@@ -332,7 +333,7 @@ def slide_06_linter(prs):
               "no secrets, intact delimiters, the inert-data instruction, data minimisation, injection-like code")
     _mini_box(s, 2, 5.45, "C1  budget  ·  fix-its",
               "a token budget, and every error comes with the sentence that repairs it")
-    lo, hi = LINTER["s7_tokens"]
+    lo, hi = LINTER["s7_tokens_at_review4"]
     s0_lo, s0_hi = LINTER["s0_score_range"]
     n = LINTER["findings"]
     callout(s, f"On the {n} real findings:  S7 passes {LINTER['by_strategy']['S7'][0]}/{n}  ·  S0 passes "
@@ -662,7 +663,7 @@ def slide_17_appendix_a(prs):
                  "We said so at Review 1. Ours is open and measurable: nine prompting strategies compared on the "
                  "same findings, a linter for the developer's own prompts, gates that include function "
                  "preservation, and finding identity tracked across commits.")
-    lo, hi = LINTER["s7_tokens"]
+    lo, hi = LINTER["s7_tokens_at_review4"]
     base._qa_row(s, 2, "“Who pays for the tokens?”",
                  f"In developer mode we call no model: the explanation is a template and the prompt is built "
                  f"locally. The developer's assistant reads about {lo}–{hi} tokens for S7's first message, and the "

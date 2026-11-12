@@ -26,8 +26,7 @@ class FindingNotFound(LookupError):
     pass
 
 
-def finding_for_tracked(session: Session, tracked_id: int) -> NormalizedFinding:
-    """The latest scanner evidence for a tracked finding, detached from the session."""
+def _evidence_row(session: Session, tracked_id: int) -> Finding:
     tracked = session.get(TrackedFinding, tracked_id)
     if tracked is None:
         raise FindingNotFound(f"no tracked finding #{tracked_id}")
@@ -38,6 +37,31 @@ def finding_for_tracked(session: Session, tracked_id: int) -> NormalizedFinding:
     ).first()
     if row is None:
         raise FindingNotFound(f"tracked finding #{tracked_id} has no stored evidence")
+    return row
+
+
+def finding_for_tracked(session: Session, tracked_id: int) -> NormalizedFinding:
+    """The latest scanner evidence for a tracked finding, detached from the session."""
+    return _normalized(_evidence_row(session, tracked_id))
+
+
+def dependency_group(session: Session, tracked_id: int) -> list[NormalizedFinding]:
+    """The other advisories on the same dependency in the same scan (empty for code findings).
+
+    The prompt for one advisory must name a version that fixes all of them,
+    because verification targets the whole weakness group.
+    """
+    row = _evidence_row(session, tracked_id)
+    if not row.package:
+        return []
+    siblings = session.scalars(
+        select(Finding).where(Finding.scan_id == row.scan_id, Finding.package == row.package,
+                              Finding.file_path == row.file_path, Finding.id != row.id)
+    ).all()
+    return [_normalized(f) for f in siblings]
+
+
+def _normalized(row: Finding) -> NormalizedFinding:
     return NormalizedFinding(
         tool=row.tool, rule_id=row.rule_id, message=row.message, file_path=row.file_path,
         start_line=row.start_line, end_line=row.end_line, severity=row.severity, snippet=row.snippet,
@@ -51,7 +75,8 @@ def finding_for_tracked(session: Session, tracked_id: int) -> NormalizedFinding:
 def context_for_tracked(session: Session, tracked_id: int, source_root: Path) -> FindingContext:
     if not source_root.is_dir():
         raise ContextError(f"source directory not found: {source_root}")
-    return extract_context(finding_for_tracked(session, tracked_id), source_root)
+    return extract_context(finding_for_tracked(session, tracked_id), source_root,
+                           group=dependency_group(session, tracked_id))
 
 
 def bound_expectation(ctx: FindingContext) -> LintExpectation:

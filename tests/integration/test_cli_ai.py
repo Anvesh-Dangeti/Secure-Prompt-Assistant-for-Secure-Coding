@@ -134,6 +134,6 @@ def test_propose_reports_model_failure(ids, capsys, monkeypatch) -> None:  # noq
 
 def test_strategies_and_providers_listing(capsys) -> None:  # noqa: ANN001
     code, out, _ = _run(capsys, "strategies")
-    assert code == 0 and out.count("\n") == 9 and "[must pass lint]" in out
+    assert code == 0 and out.count("\n") == 11 and out.count("[must pass lint]") == 3
     code, out, _ = _run(capsys, "providers")
     assert code == 0 and "template  available" in out

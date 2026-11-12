@@ -29,7 +29,7 @@ from app.ai.context import ContextError, extract_context
 from app.ai.conversation import ConversationResult, run_conversation
 from app.ai.prompt_builder import PromptRejected, build_prompt
 from app.ai.providers.base import LLMProvider
-from app.ai.service import FindingNotFound, finding_for_tracked
+from app.ai.service import FindingNotFound, dependency_group, finding_for_tracked
 from app.core.redaction import redact
 from app.core.scratch import copy_trusted_tree, scratch_dir
 from app.db.models import TrackedFinding, Verdict, Verification, VerificationMode
@@ -106,6 +106,7 @@ def run_lab_trial(session: Session, tracked_id: int, source_root: Path, strategy
         raise LabError("lab mode needs a provider that generates text")
     try:
         finding = finding_for_tracked(session, tracked_id)
+        group = dependency_group(session, tracked_id)
     except FindingNotFound as exc:
         raise LabError(str(exc)) from exc
     baseline = baseline or prepare_baseline(source_root, scanners, run_tests)
@@ -119,7 +120,7 @@ def run_lab_trial(session: Session, tracked_id: int, source_root: Path, strategy
         patched = work / "code"
         copy_trusted_tree(source_root, patched, EXCLUDED_DIRS)
         try:
-            ctx = extract_context(finding, patched)
+            ctx = extract_context(finding, patched, group=group)
             if ctx.snippet_verified is False:
                 raise LabError("--source differs from the scanned code; rescan it first")
             plan = build_prompt(ctx, strategy)

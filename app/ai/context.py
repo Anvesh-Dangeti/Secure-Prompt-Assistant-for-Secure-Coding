@@ -34,6 +34,7 @@ import re
 import textwrap
 import tokenize
 from dataclasses import dataclass
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Protocol
 
@@ -355,8 +356,40 @@ def _dependency_line(lines: list[str], package: str) -> int | None:
 # ---- entry point ------------------------------------------------------------
 
 
-def extract_context(finding: FindingLike, source_root: Path) -> FindingContext:
-    """Build the minimal context for ``finding`` from the code under ``source_root``."""
+def _advisories(finding: FindingLike) -> tuple[str, ...]:
+    return tuple(finding.cve_ids or []) or ((finding.rule_id,) if finding.package else ())
+
+
+def _same_dependency(finding: FindingLike, group: Sequence[FindingLike]) -> list[FindingLike]:
+    """The other findings on the same package in the same requirements file."""
+    return [f for f in group if f is not finding and f.package and finding.package
+            and f.package.lower() == finding.package.lower() and f.file_path == finding.file_path
+            and f.rule_id != finding.rule_id]
+
+
+def _group_fixed_version(finding: FindingLike, group: Sequence[FindingLike]) -> str | None:
+    """The lowest version that fixes *every* advisory on this dependency.
+
+    A scanner reports one finding per advisory, each with the first version that
+    fixes it. Verification targets the whole weakness (every advisory on the
+    package), so the directive must name the highest of those per-advisory fixes:
+    PyYAML 5.3 has PYSEC-2020-96 (fixed in 5.3.1) and PYSEC-2021-142 (fixed in
+    5.4), and an upgrade to 5.3.1 leaves the second one in place.
+    """
+    fixes = [_fixed_version(f.package_version, list(f.fix_versions or []))
+             for f in (finding, *_same_dependency(finding, group))]
+    fixes = [v for v in fixes if v]
+    return max(fixes, key=_version_key) if fixes else None
+
+
+def extract_context(finding: FindingLike, source_root: Path, *,
+                    group: Sequence[FindingLike] = ()) -> FindingContext:
+    """Build the minimal context for ``finding`` from the code under ``source_root``.
+
+    ``group`` is the rest of the scan's findings (or any superset of the
+    finding's weakness group); it is used only to choose a dependency's fixed
+    version, so it may be empty.
+    """
     settings = get_settings()
     text = read_source(source_root, finding.file_path)
     lines = text.splitlines()
@@ -418,7 +451,11 @@ def extract_context(finding: FindingLike, source_root: Path) -> FindingContext:
     verified = (snippet in original) if snippet else None
 
     cwe = canonical_cwe(finding.cwe)
-    vulns = tuple(finding.cve_ids or []) or ((finding.rule_id,) if finding.package else ())
+    vulns = _advisories(finding)
+    if finding.package:
+        # Name every advisory the upgrade must fix, not only this finding's (see _group_fixed_version).
+        for other in _same_dependency(finding, group):
+            vulns += tuple(v for v in _advisories(other) if v not in vulns)
     return FindingContext(
         tool=finding.tool, rule_id=finding.rule_id, cwe=cwe,
         owasp=owasp_label(finding.owasp) or finding.owasp, severity=finding.severity,
@@ -427,6 +464,6 @@ def extract_context(finding: FindingLike, source_root: Path) -> FindingContext:
         window_start=win[0], window_end=win[1], window_kind=kind, symbol=symbol,
         code=code, indent=indent, sources=sources, sinks=sinks, targets=targets, constants=constants,
         package=finding.package, package_version=finding.package_version, vulns=vulns,
-        fixed_version=_fixed_version(finding.package_version, list(finding.fix_versions or [])),
+        fixed_version=_group_fixed_version(finding, group) if finding.package else None,
         snippet_verified=verified,
     )
