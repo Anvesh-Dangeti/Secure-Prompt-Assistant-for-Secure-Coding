@@ -54,7 +54,7 @@ All numbers are in `evaluation/recorded_results.py` and asserted by tests. The d
 | Strategy pilot (90 lab fixes, local 7B model) | 59 verified; CWE-specific guidance led; recursive review cost ~5× the tokens and broke behaviour more often |
 | **Token ladder** (the minimal prompt, live) | **9/10 verified at ~380 tokens per attempt**, against 8/10 at ~2,220 for the full three-message prompt |
 | Fixes to functions that other code calls | 13 verified, **0 broke the caller**; 7 behaviour breaks the scanners missed, caught by the tests |
-| Tool's own security | self-scan: 3 LOW advisories in the subprocess wrapper only; pip-audit of all 35 packages: **0 vulnerabilities**; **806 tests** |
+| Tool's own security | self-scan: 3 LOW advisories in the subprocess wrapper only; pip-audit of all 35 packages: **0 vulnerabilities**; **817 tests** |
 
 ## The panel's questions (mid-semester review)
 

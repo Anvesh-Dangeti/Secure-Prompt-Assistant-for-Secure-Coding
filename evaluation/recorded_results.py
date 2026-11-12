@@ -194,3 +194,5 @@ SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 
 TESTS_AT_REVIEW3 = 278
 TESTS_AT_REVIEW4 = 637        # the Review 4 pack (21 Oct); that review was cancelled
 TESTS = 749
+TESTS_AT_MIDSEM = TESTS     # the mid-semester decks show this count
+TESTS_FINAL = 817           # the final review: the whole suite (application + lint library), full run
