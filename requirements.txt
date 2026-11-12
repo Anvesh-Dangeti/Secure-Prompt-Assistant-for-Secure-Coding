@@ -35,6 +35,13 @@ PyYAML==6.0.3
 # ---- AI layer: local model server (Ollama) over HTTP ----------------------
 httpx==0.28.1                   # also used by FastAPI's TestClient
 
+# ---- prompt security linter: our own library, in this repository -------------
+# The linter, the untrusted-code delimiting, the injection heuristic and the
+# secret patterns live in libs/secure-prompt-lint (no third-party dependencies),
+# which is also published on its own. Installed in editable mode, so there is
+# one copy of that code. Run pip from the repository root.
+-e ./libs/secure-prompt-lint
+
 # ---- tests -------------------------------------------------------------------
 pytest==9.1.1
 

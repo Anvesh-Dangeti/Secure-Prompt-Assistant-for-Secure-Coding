@@ -1,17 +1,13 @@
 """Token estimation for prompts that have not been sent to a model.
 
-About four characters per token is the usual rule of thumb for BPE tokenisers
-on English and code. It is an *estimate*, used for the linter's budget rule and
-for developer-mode prompts that go to an assistant we cannot meter. Lab-mode
-results record the exact counts the model server reports instead.
+The implementation lives in the stand-alone ``secure_prompt_lint`` library
+(``libs/secure-prompt-lint``), which this application and the published linter
+share, so there is one copy of the code. See ``secure_prompt_lint.tokens`` for
+the design notes. Re-exported here so the application keeps one import path.
 """
 
 from __future__ import annotations
 
-import math
+from secure_prompt_lint.tokens import CHARS_PER_TOKEN, estimate_tokens
 
-CHARS_PER_TOKEN = 4
-
-
-def estimate_tokens(text: str) -> int:
-    return math.ceil(len(text or "") / CHARS_PER_TOKEN)
+__all__ = ["CHARS_PER_TOKEN", "estimate_tokens"]

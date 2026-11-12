@@ -1,35 +1,28 @@
-"""What a prompt is checked against.
+"""What a prompt is checked against -- the application's side of the linter.
+
+The linter itself is the ``secure_prompt_lint`` library. This module binds it to
+a finding the way only this application can: from a ``FindingContext`` (the
+entities ``ast`` found, the symbol and file) and the guidance table, whose
+sentences become the fix-its. A fix-it therefore inserts exactly the sentence
+our own strategy S7 would have had.
 
 *Bound* to a finding, the linter knows the exact entities, weakness and
-handling-directive vocabulary, and can offer the sentence that fixes each
-missing constituent. *Unbound* -- a developer's own prompt with no finding
-attached -- it can only check for the presence of *some* entity, weakness and
-directive from the whole guidance table, and offers advice instead of sentences.
+handling-directive vocabulary. *Unbound* -- a developer's own prompt with no
+finding attached -- it checks for *some* entity, weakness and directive from
+the whole table, and offers advice instead of sentences.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
-from dataclasses import dataclass, field
+from secure_prompt_lint.expectation import LintExpectation
+from secure_prompt_lint.expectation import unbound_expectation as _library_unbound
 
 from app.ai import sentences
 from app.ai.context import FindingContext
-from app.ai.guidance import all_vocabulary, all_weakness_terms, guidance_for
+from app.ai.guidance import guidance_for
 from app.core.config import get_settings
 
-
-@dataclass(frozen=True)
-class LintExpectation:
-    bound: bool
-    cwe: str | None = None
-    weakness_terms: tuple[str, ...] = ()
-    entities: tuple[str, ...] = ()
-    locations: tuple[str, ...] = ()
-    vocabulary: tuple[str, ...] = ()
-    max_block_lines: int = 40
-    token_budget: int = 1500
-    fixits: Mapping[str, str] = field(default_factory=dict)
-    canonical: str | None = None     # the generated prompt, for the no-shorten rule (A7)
+__all__ = ["LintExpectation", "expectation_for", "unbound_expectation"]
 
 
 def expectation_for(ctx: FindingContext, canonical: str | None = None) -> LintExpectation:
@@ -57,11 +50,10 @@ def expectation_for(ctx: FindingContext, canonical: str | None = None) -> LintEx
 
 
 def unbound_expectation() -> LintExpectation:
+    """The library's unbound expectation with this deployment's limits.
+
+    Its vocabulary is the one exported from our guidance table
+    (``scripts/export_lint_vocabulary.py``; a test keeps them equal).
+    """
     s = get_settings()
-    return LintExpectation(
-        bound=False,
-        weakness_terms=all_weakness_terms(),
-        vocabulary=all_vocabulary(),
-        max_block_lines=s.max_context_lines,
-        token_budget=s.prompt_token_budget,
-    )
+    return _library_unbound(max_block_lines=s.max_context_lines, token_budget=s.prompt_token_budget)

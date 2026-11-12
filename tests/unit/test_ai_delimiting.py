@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.ai import delimiting
+from secure_prompt_lint import delimiting  # the implementation (app.ai.delimiting re-exports it)
 from app.ai.delimiting import INERT_INSTRUCTION, split_prompt, wrap_untrusted
 
 

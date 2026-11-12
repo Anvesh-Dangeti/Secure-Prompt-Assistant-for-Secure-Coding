@@ -1,65 +1,13 @@
 """Run every lint rule over one prompt.
 
-Deterministic and model-free: the same prompt always gets the same report, so
-lint results are reproducible evidence, and the linter can be evaluated on its
-own (E1) without any LLM.
+The implementation lives in the stand-alone ``secure_prompt_lint`` library
+(``libs/secure-prompt-lint``), which this application and the published linter
+share, so there is one copy of the code. See ``secure_prompt_lint.engine`` for
+the design notes. Re-exported here so the application keeps one import path.
 """
 
 from __future__ import annotations
 
-from dataclasses import replace
+from secure_prompt_lint.engine import SHORTENED_RATIO, lint
 
-from app.ai.delimiting import split_prompt
-from app.ai.linter.constituents import check_constituents
-from app.ai.linter.expectation import LintExpectation, unbound_expectation
-from app.ai.linter.hygiene import check_hygiene
-from app.ai.linter.report import CONSTITUENTS, WARNING, LintIssue, LintReport
-
-SHORTENED_RATIO = 0.6
-# The generated sentences A7 tracks one by one (their text is the fix-it for the rule).
-SENTENCES = {"A5": "opening", "A3": "handling directive", "A2": "guard", "A4": "scope"}
-
-
-def _norm(text: str) -> str:
-    return " ".join(text.lower().split())
-
-
-def _shortening(text: str, preamble: str, present: dict, exp: LintExpectation) -> list[LintIssue]:
-    """A7: compare against the prompt the tool generated, when we have it."""
-    if not exp.canonical:
-        return []
-    canonical = lint(exp.canonical, replace(exp, canonical=None), preamble=preamble)
-    lost = [r for r in CONSTITUENTS if canonical.constituents.get(r) and not present.get(r)]
-    issues = []
-    if lost:
-        issues.append(LintIssue("A7", WARNING, "editing removed constituents the generated prompt had: "
-                                + ", ".join(lost)))
-    # Sentence by sentence (found by E1): S7 restates its mitigation in the guard, so deleting the directive
-    # sentence can leave A3's vocabulary behind. The constituent then still "passes", but a generated
-    # sentence was edited out -- say so, as a warning, since a reworded sentence may keep its meaning.
-    edited, generated = _norm(text), _norm(exp.canonical)
-    dropped = [name for rule, name in SENTENCES.items() if rule not in lost and (s := exp.fixits.get(rule))
-               and _norm(s) in generated and _norm(s) not in edited]
-    if dropped:
-        issues.append(LintIssue("A7", WARNING, "the generated " + ", ".join(dropped) + " sentence was edited out; "
-                                "check that its meaning is still in the prompt"))
-    original = len(split_prompt(exp.canonical).instructions.strip())
-    kept = len(split_prompt(text).instructions.strip())
-    if original and kept / original < SHORTENED_RATIO:
-        issues.append(LintIssue("A7", WARNING, f"the instructions were shortened to {kept * 100 // original}% of "
-                                "the generated prompt; minimal edits alone raised vulnerability rates in Paper 2"))
-    return issues
-
-
-def lint(text: str, expectation: LintExpectation | None = None, *, preamble: str = "") -> LintReport:
-    """Lint ``text`` (the first user message). ``preamble`` is a system/rules text sent before it."""
-    exp = expectation or unbound_expectation()
-    split = split_prompt(text)
-    issues, present = check_constituents(split, preamble, exp)
-    issues += _shortening(text, preamble, present, exp)
-    hygiene, tokens = check_hygiene(text, preamble, split, exp)
-    issues += hygiene
-    order = {rule: i for i, rule in enumerate(("A5", "A1", "A2", "A3", "A4", "A6", "A7",
-                                               "B1", "B2", "B3", "B4", "B5", "C1"))}
-    issues.sort(key=lambda i: (i.severity == WARNING, order.get(i.rule, 99)))
-    return LintReport(tuple(issues), present, tokens, exp.bound)
+__all__ = ["SHORTENED_RATIO", "lint"]

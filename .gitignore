@@ -30,3 +30,8 @@ rules/vendor/
 .idea/
 Thumbs.db
 .DS_Store
+
+# Package build output (libs/secure-prompt-lint)
+build/
+dist/
+*.egg-info/

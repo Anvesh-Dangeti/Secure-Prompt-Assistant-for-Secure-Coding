@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "secure-prompt-lint"
+version = "1.0.0"
+description = "A deterministic linter for security-remediation prompts: constituent rules, prompt-injection hygiene, token budget, and fix-its."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["security", "prompt", "linter", "llm", "secure-coding", "cwe", "prompt-injection"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Security",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+secure-prompt-lint = "secure_prompt_lint.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+secure_prompt_lint = ["data/*.json", "py.typed"]

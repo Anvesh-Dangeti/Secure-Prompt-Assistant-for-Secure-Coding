@@ -1,0 +1,233 @@
+{
+  "source": "Secure Prompt Assistant guidance table (cwe_guidance.yaml), exported by scripts/export_lint_data.py",
+  "weaknesses": {
+    "CWE-89": {
+      "name": "SQL injection",
+      "aliases": [
+        "sqli",
+        "sql injection"
+      ],
+      "vocabulary": [
+        "parameteris",
+        "parameteriz",
+        "placeholder",
+        "bound parameter",
+        "bind parameter",
+        "prepared statement"
+      ],
+      "templates": {
+        "explain": "`{source}` comes from {origin} and is formatted into the SQL text passed to `{sink}`.",
+        "directive": "Use a parameterised query: put a placeholder in the SQL text and pass `{source}` separately as a bound parameter of `{sink}`.",
+        "guard": "The query may run only after `{source}` is bound as a parameter; never build SQL text from it."
+      }
+    },
+    "CWE-78": {
+      "name": "OS command injection",
+      "aliases": [
+        "command injection",
+        "shell injection"
+      ],
+      "vocabulary": [
+        "shell=false",
+        "argument list",
+        "list of arguments",
+        "without a shell",
+        "allowlist",
+        "allow-list"
+      ],
+      "templates": {
+        "explain": "`{source}` comes from {origin} and is concatenated into a command that `{sink}` runs through a shell.",
+        "directive": "Call the program with an argument list and shell=False, passing `{source}` as a single argument, and reject values that do not match a strict allowlist pattern.",
+        "guard": "Run the command only if `{source}` has passed the allowlist check; never pass it through a shell."
+      }
+    },
+    "CWE-79": {
+      "name": "cross-site scripting",
+      "aliases": [
+        "xss",
+        "cross-site scripting",
+        "cross site scripting"
+      ],
+      "vocabulary": [
+        "escape",
+        "autoescap",
+        "markupsafe",
+        "output encoding",
+        "html entit"
+      ],
+      "templates": {
+        "explain": "`{source}` comes from {origin} and is inserted into an HTML response without escaping.",
+        "directive": "HTML-escape `{source}` before it is placed in the response, for example with markupsafe.escape or a template with autoescaping.",
+        "guard": "Insert `{source}` into the HTML only after it has been escaped."
+      }
+    },
+    "CWE-798": {
+      "name": "hard-coded credential",
+      "aliases": [
+        "hard-coded credential",
+        "hardcoded credential",
+        "hard-coded secret",
+        "hardcoded secret",
+        "hard-coded password",
+        "hardcoded password"
+      ],
+      "vocabulary": [
+        "environment variable",
+        "os.environ",
+        "getenv",
+        "secret manager",
+        "secrets manager",
+        "vault"
+      ],
+      "templates": {
+        "explain": "`{target}` holds a credential written directly in the source code.",
+        "directive": "Remove the literal value and load `{target}` at runtime from an environment variable or a secret manager.",
+        "guard": "Use the credential only if it was supplied at runtime; fail with a clear error when it is missing instead of falling back to a default."
+      }
+    },
+    "CWE-22": {
+      "name": "path traversal",
+      "aliases": [
+        "path traversal",
+        "directory traversal"
+      ],
+      "vocabulary": [
+        "realpath",
+        "resolve",
+        "commonpath",
+        "is_relative_to",
+        "safe_join",
+        "canonical"
+      ],
+      "templates": {
+        "explain": "`{source}` comes from {origin} and is joined into a filesystem path that `{sink}` opens.",
+        "directive": "Resolve the joined path and refuse the request unless the resolved path stays inside `{base}`, for example with os.path.realpath and os.path.commonpath.",
+        "guard": "Open the file only if the resolved path is inside `{base}`; otherwise return an error."
+      }
+    },
+    "CWE-327": {
+      "name": "weak password hash",
+      "aliases": [
+        "weak hash",
+        "insecure hash",
+        "broken hash",
+        "weak crypto",
+        "md5",
+        "sha1"
+      ],
+      "vocabulary": [
+        "scrypt",
+        "pbkdf2",
+        "bcrypt",
+        "argon2",
+        "salt"
+      ],
+      "templates": {
+        "explain": "`{sink}` is a fast, unsalted hash, so it is unsuitable for protecting `{source}`.",
+        "directive": "Hash `{source}` with a slow, salted password-hashing function such as hashlib.scrypt or PBKDF2-HMAC-SHA256 with a random per-password salt.",
+        "guard": "Store or compare a password only after it has been through the salted password-hashing function."
+      }
+    },
+    "CWE-330": {
+      "name": "insufficiently random values",
+      "aliases": [
+        "insecure random",
+        "weak random",
+        "predictable token",
+        "insufficient randomness"
+      ],
+      "vocabulary": [
+        "secrets module",
+        "secrets.",
+        "cryptographically secure",
+        "csprng",
+        "os.urandom",
+        "systemrandom"
+      ],
+      "templates": {
+        "explain": "`{sink}` generates a security-sensitive value but is not a cryptographically secure generator.",
+        "directive": "Generate the value with the secrets module (for example secrets.token_urlsafe or secrets.randbelow) instead of `{sink}`.",
+        "guard": "Issue the value only when it comes from a cryptographically secure generator."
+      }
+    },
+    "CWE-502": {
+      "name": "deserialisation of untrusted data",
+      "aliases": [
+        "insecure deserialization",
+        "insecure deserialisation",
+        "unsafe deserialization",
+        "unsafe deserialisation",
+        "pickle"
+      ],
+      "vocabulary": [
+        "json",
+        "data-only",
+        "do not unpickle",
+        "never unpickle",
+        "safe_load"
+      ],
+      "templates": {
+        "explain": "`{source}` comes from {origin} and is passed to `{sink}`, which can execute code while deserialising.",
+        "directive": "Do not unpickle client data; parse `{source}` as JSON with json.loads and validate the expected fields.",
+        "guard": "Accept the data only after it has been parsed as plain JSON and its fields validated."
+      }
+    },
+    "CWE-94": {
+      "name": "debug mode enabled",
+      "aliases": [
+        "debug mode",
+        "debug=true"
+      ],
+      "vocabulary": [
+        "debug=false",
+        "defaults to off",
+        "default to off",
+        "disable debug",
+        "environment variable"
+      ],
+      "templates": {
+        "explain": "`{sink}` is called with debug mode switched on in the code.",
+        "directive": "Do not enable debug mode in code; read the setting from configuration, such as an environment variable, that defaults to off.",
+        "guard": "Enable debugging only when it is explicitly configured for local development, never by default."
+      }
+    },
+    "CWE-1395": {
+      "name": "vulnerable dependency",
+      "aliases": [
+        "vulnerable dependency",
+        "outdated dependency",
+        "vulnerable package"
+      ],
+      "vocabulary": [
+        "upgrade",
+        "update to",
+        "bump"
+      ],
+      "templates": {
+        "explain": "`{package}` is pinned to version {version}, which has known vulnerabilities ({vulns}).",
+        "directive": "Upgrade `{package}` to {fixed} or later and keep the version pinned exactly.",
+        "guard": "Deploy only after `{package}` is at a version that fixes {vulns}."
+      }
+    }
+  },
+  "cwe_aliases": {
+    "CWE-215": "CWE-94",
+    "CWE-259": "CWE-798",
+    "CWE-328": "CWE-327",
+    "CWE-489": "CWE-94",
+    "CWE-916": "CWE-327"
+  },
+  "slot_defaults": {
+    "source": "the untrusted value",
+    "origin": "outside the program",
+    "sink": "the vulnerable call",
+    "target": "the value",
+    "base": "the intended directory",
+    "symbol": "the marked code",
+    "package": "the package",
+    "version": "the pinned version",
+    "fixed": "a fixed version",
+    "vulns": "the published advisories",
+    "cwe": "this CWE"
+  }
+}
