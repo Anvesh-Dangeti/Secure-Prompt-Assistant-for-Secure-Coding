@@ -37,8 +37,12 @@ security constituent, or send a secret or a whole file to a third-party model.
 ## Install
 
 ```bash
-pip install .                    # from this folder
+pip install git+https://github.com/Anvesh-Dangeti/secure-prompt-lint
+# or, from a checkout:
+pip install .
 ```
+
+Run the tests with `pip install pytest && pytest`.
 
 ## Quick start: command line
 
