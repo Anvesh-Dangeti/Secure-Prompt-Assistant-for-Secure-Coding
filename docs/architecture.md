@@ -36,7 +36,7 @@ scan that could not examine a finding can never mark it resolved.
                          ┌────────────────────────── dashboard/web (FastAPI + Jinja2 + htmx, 127.0.0.1) ─┐
   developer ── browser ─►│ overview · findings · prompt & lint · verify · scan history                   │
             ── CLI ─────►│ app/cli.py · app/cli_ai.py · app/cli_verify.py                                │
-            ── API ─────►│ app/main.py + app/api/  (X-API-Key, fail closed)                              │
+            ── API ─────►│ app/main.py + app/api/  (admin key or per-project token, fail closed)         │
                          └───────────────────────────────┬───────────────────────────────────────────────┘
                                                          │ same services
    ┌──────────────── app/scan_service.py ────────────────┴───────────── app/verification/service.py ──┐
@@ -64,12 +64,14 @@ scan that could not examine a finding can never mark it resolved.
 | `app/sandbox/` | lab mode: splice a model's proposal into a scratch copy, rescan, run the behaviour tests |
 | `dashboard/` | read models (`data.py`) and validated actions (`actions.py`) shared by the web pages |
 | `libs/secure-prompt-lint/` | the prompt linter as a stand-alone, dependency-free library; the application imports it (one copy of the code) |
+| `libs/spa-connect/` | `spa`, the command a developer runs in a project folder to use a shared server (§10); standard library only, never imports the application |
+| `app/access_tokens.py`, `app/api/prompts.py` | per-project access tokens (stored as hashes); a prompt built from the one file a connector sends |
 | `evaluation/` | ground truth, scripted scenarios, experiments E1, E2, E5, the related-functions evidence, and `recorded_results.py` (every number we report, asserted by tests) |
 
 ## 3. What happens in a scan
 
 1. **Connect.** The developer gives a local checkout path, a ZIP archive or an
-   https Git URL. URLs pass the SSRF checks, are cloned shallowly with the
+   https Git URL; on a shared server, `spa scan` uploads the folder as a ZIP (§10). URLs pass the SSRF checks, are cloned shallowly with the
    operator's git configuration disabled, and the clone is deleted afterwards.
 2. **Copy and neutralise.** The tree is copied into a scratch directory, and
    in-repository scanner configuration (`.semgrepignore`, `.bandit`,
@@ -152,6 +154,7 @@ is in [`related_functions.md`](related_functions.md).
 | `tracked_findings`, `lifecycle_events` | identity across scans and every state transition, with suppression reasons |
 | `blind_spots`, `symbol_snapshots` | what a scan could not see; structural facts per flagged symbol |
 | `verifications` | each verdict with per-check results, mode, strategy, model, parameters and token counts |
+| `access_tokens` | a developer's token for one project: SHA-256 hash, display prefix, expiry, last use, revocation |
 
 ## 8. The lint library boundary
 
@@ -177,3 +180,25 @@ library is also published on its own: <https://github.com/Anvesh-Dangeti/secure-
 | Storage | SQLite + SQLAlchemy | zero operations; parameterised queries only |
 | Local model (lab) | Ollama 0.40, `qwen2.5-coder:7b-instruct` | runs on an 8 GB GPU; loopback only |
 | Configuration | pydantic-settings, `.env` | typed; secrets never in code |
+
+## 10. Shared server: the `spa` connector
+
+On one machine the tool reads the developer's checkout directly. On a server a
+team shares, it cannot. There, a developer runs `spa` in the project folder.
+
+```
+spa connect  ─► GET  /api/v1/whoami                    token checked, kept in the user's config dir
+spa scan     ─► POST /api/v1/projects/{id}/scans/zip    folder packed (no caches, .env, links), scanned, deleted
+spa findings ─► GET  /api/v1/projects/{id}/findings
+spa prompt   ─► POST /api/v1/tracked/{id}/prompt        one file: the finding's own; nothing kept
+spa verify   ─► scan again, then POST /api/v1/tracked/{id}/verify?scan_id=...
+```
+
+- **Nothing about verification moves to the client.** The server runs the
+  same scanners and checks on what it receives, so a laptop can never report
+  a verdict of its own.
+- **Each developer has a token for one project.** Another project's data
+  answers 404. `SPA_API_KEY` remains the administrator's key, and the web
+  interface stays loopback-only.
+
+Setup, data handling, controls and limits are in [`deployment.md`](deployment.md).

@@ -196,3 +196,5 @@ TESTS_AT_REVIEW4 = 637        # the Review 4 pack (21 Oct); that review was canc
 TESTS = 749
 TESTS_AT_MIDSEM = TESTS     # the mid-semester decks show this count
 TESTS_FINAL = 817           # the final review: the whole suite (application + lint library), full run
+# After the final review: the shared-server connector (access tokens, the prompt route, libs/spa-connect).
+TESTS_WITH_CONNECTOR = 909  # full run: 909 passed, 4 skipped (2 symlink, 2 POSIX-only on Windows)

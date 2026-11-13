@@ -11,17 +11,24 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, require_api_key
+from app.api.deps import Principal, current_principal, get_db
+from app.api.findings import tracked_or_404
 from app.api.schemas import VerificationOut
 from app.db.models import Verification
 from app.verification.service import NotVerifiable, VerificationNotFound, history, verify
 
-router = APIRouter(prefix="/api/v1", tags=["verification"], dependencies=[Depends(require_api_key)])
+router = APIRouter(prefix="/api/v1", tags=["verification"], dependencies=[Depends(current_principal)])
 
 
 @router.post("/tracked/{tracked_id}/verify", response_model=VerificationOut)
-def verify_tracked(tracked_id: int, scan_id: int | None = None, db: Session = Depends(get_db)) -> Verification:
-    """Verify a fix against ``scan_id`` (default: the project's latest scan). Scan first, then verify."""
+def verify_tracked(tracked_id: int, scan_id: int | None = None, db: Session = Depends(get_db),
+                   principal: Principal = Depends(current_principal)) -> Verification:
+    """Verify a fix against ``scan_id`` (default: the project's latest scan). Scan first, then verify.
+
+    A scan from another project is refused by the service itself, so a token
+    cannot judge its finding against someone else's code.
+    """
+    tracked_or_404(db, tracked_id, principal)
     try:
         return verify(db, tracked_id, scan_id)
     except VerificationNotFound as exc:
@@ -31,7 +38,9 @@ def verify_tracked(tracked_id: int, scan_id: int | None = None, db: Session = De
 
 
 @router.get("/tracked/{tracked_id}/verifications", response_model=list[VerificationOut])
-def list_verifications(tracked_id: int, db: Session = Depends(get_db)) -> list[Verification]:
+def list_verifications(tracked_id: int, db: Session = Depends(get_db),
+                       principal: Principal = Depends(current_principal)) -> list[Verification]:
+    tracked_or_404(db, tracked_id, principal)
     try:
         return history(db, tracked_id)
     except VerificationNotFound as exc:

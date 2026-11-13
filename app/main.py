@@ -13,7 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app import __version__
-from app.api import findings, health, projects, verification
+from app.api import account, findings, health, projects, prompts, verification
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
 from app.db.session import init_db
@@ -27,7 +27,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     configure_logging(settings.log_level)
     init_db()
     if settings.api_key is None:
-        log.warning("SPA_API_KEY is not set: all protected endpoints will return 503")
+        log.warning("SPA_API_KEY is not set: requests without an access token will return 503")
     yield
 
 
@@ -67,6 +67,8 @@ def create_app() -> FastAPI:
     app.include_router(projects.router)
     app.include_router(findings.router)
     app.include_router(verification.router)
+    app.include_router(prompts.router)
+    app.include_router(account.router)
     return app
 
 

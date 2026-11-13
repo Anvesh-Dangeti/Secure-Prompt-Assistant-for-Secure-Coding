@@ -9,12 +9,14 @@ mismatch means the checkout has moved on since the scan and is reported.
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.context import ContextError, FindingContext, extract_context
+from app.ai.explainer import explain
 from app.ai.linter import LintExpectation, expectation_for
 from app.ai.prompt_builder import build_prompt
 from app.ai.strategies import DEFAULT_STRATEGY
@@ -77,6 +79,28 @@ def context_for_tracked(session: Session, tracked_id: int, source_root: Path) ->
         raise ContextError(f"source directory not found: {source_root}")
     return extract_context(finding_for_tracked(session, tracked_id), source_root,
                            group=dependency_group(session, tracked_id))
+
+
+STALE_SOURCE = "the code differs from the scanned version; rescan for exact context"
+
+
+@dataclass(frozen=True)
+class PromptResult:
+    """A developer-mode prompt, ready to show: what to paste and how it linted."""
+
+    strategy: str
+    rendered: str
+    lint: dict
+    tokens: int
+    explanation_source: str
+    warning: str | None
+
+
+def prompt_for_context(ctx: FindingContext, strategy: str = DEFAULT_STRATEGY) -> PromptResult:
+    """Explain, build and lint one prompt (raises ``PromptRejected`` or ``ValueError`` for a bad strategy)."""
+    plan = build_prompt(ctx, strategy, explanation=explain(ctx))
+    return PromptResult(plan.strategy, plan.render(), plan.lint.to_dict(), plan.estimated_tokens,
+                        plan.explanation.source, STALE_SOURCE if ctx.snippet_verified is False else None)
 
 
 def bound_expectation(ctx: FindingContext) -> LintExpectation:

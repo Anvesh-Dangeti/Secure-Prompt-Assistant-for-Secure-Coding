@@ -16,6 +16,7 @@ features**: a smaller secure tool beats a larger insecure one.
 | The verdict | the product's claim is "this fix is verified". A forged `VERIFIED_RESOLVED` would be worse than no tool at all |
 | The prompt | it reaches a third-party assistant; it must not carry secrets or instructions hidden in the code |
 | The findings history | identity and lifecycle across commits; a regression must not be lost or disguised as "new" |
+| Access tokens (shared server) | a developer's token opens one project's code and findings; it must not leak, outlive its purpose, or open another project |
 
 ## 2. Adversaries
 
@@ -30,6 +31,9 @@ features**: a smaller secure tool beats a larger insecure one.
   follow injected instructions or produce wrong or fake fixes.
 - **A careless or rushed developer** who shortens a prompt, pastes a secret,
   or commits a "fix" that only silences the scanner.
+- **Another developer on a shared server** (see [`deployment.md`](deployment.md)),
+  holding a valid token for a different project, or someone who has found a
+  token in a log, a commit or a shell history.
 
 ## 3. Trust boundaries
 
@@ -63,6 +67,8 @@ features**: a smaller secure tool beats a larger insecure one.
 | 9 | Logs | Information disclosure: secrets in logs | JSON logs passed through a redaction filter; the API never returns stack traces | `tests/unit/test_redaction.py` |
 | 10 | Scratch directories | Information disclosure: leftover copies of code | Guaranteed cleanup on every exit path, failures included | `tests/unit/test_paths_scratch.py` |
 | — | Model server (lab) | SSRF, data leakage through a proxy | Loopback-only base URL, `trust_env=False` (no proxies), no redirects, bounded response | `tests/unit/test_ai_providers.py` |
+| 1 | Developer's laptop ↔ shared API (`spa`) | Spoofing, information disclosure, elevation: a stolen or leaked token, another project's token, interception, a redirect carrying the token away | Per-project tokens stored only as SHA-256 hashes, with expiry and revocation. Every route checks the project, and another project's data answers 404. Creating projects needs the administrator key, and a bearer token beats a key sent with it. `spa` uses https only (http to loopback only), verifies certificates, never follows a redirect, never takes the token as an argument, and keeps it outside the project | `tests/unit/test_access_tokens.py`, `tests/security/test_token_authorization.py`, `libs/spa-connect/tests`, `tests/integration/test_spa_connect_e2e.py` |
+| 3 | Prompt route (shared server) | Tampering, information disclosure: a client writes other paths into scratch, or sends more code than needed | Only the finding's own path is accepted, at most 1 MB, written with a containment check into a private scratch directory that is deleted at the end of the request | `tests/integration/test_api_prompt.py` |
 | — | Lint library CLI | DoS, parser abuse through a huge or binary input | Input capped at 256 KB by default, read as UTF-8 text only and never executed; exit code 2 for bad input | `libs/secure-prompt-lint/tests/test_lib_cli.py` |
 
 ## 5. Assessing the tool itself (Phase 9)
@@ -98,5 +104,9 @@ features**: a smaller secure tool beats a larger insecure one.
 - **Scanners have blind spots.** A weakness no scanner detects can neither be
   found nor verified. Two independent SAST engines reduce this risk but do not
   remove it.
-- **Single machine, single user.** There is no multi-user authorisation model.
-  The tool is designed to run locally for one developer.
+- **Per-project tokens, not full multi-user authorisation.** On a shared
+  server each developer has a token for one project, and one administrator
+  key exists. There is no single sign-on, no roles within a project and no
+  audit log beyond the scan history and each token's last use. Scans run
+  synchronously on one node with SQLite, which suits a small team. See
+  [`deployment.md`](deployment.md).

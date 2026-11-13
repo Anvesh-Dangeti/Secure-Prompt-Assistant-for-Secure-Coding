@@ -148,3 +148,32 @@ class VerificationOut(BaseModel):
     completion_tokens: int | None
     calls: int
     created_at: datetime
+
+
+class PromptRequest(BaseModel):
+    """One file from the developer's machine: the file the finding is in, and nothing else."""
+
+    strategy: str = Field(default="S7", min_length=1, max_length=10)
+    file_path: str = Field(min_length=1, max_length=500)
+    # A ceiling for parsing only; the configured byte limit is checked in the route.
+    content: str = Field(max_length=4 * 1024 * 1024)
+
+
+class PromptOut(BaseModel):
+    tracked_finding_id: int
+    file_path: str
+    strategy: str
+    prompt: str
+    tokens: int
+    lint: dict
+    explanation_source: str
+    warning: str | None
+
+
+class WhoAmIOut(BaseModel):
+    kind: str
+    token_id: int | None = None
+    token_name: str | None = None
+    project_id: int | None = None
+    project: str | None = None
+    expires_at: datetime | None = None

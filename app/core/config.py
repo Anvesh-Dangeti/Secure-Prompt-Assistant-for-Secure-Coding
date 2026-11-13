@@ -40,7 +40,12 @@ class Settings(BaseSettings):
 
     # ---- API authentication -------------------------------------------
     # No default. If unset, every protected endpoint refuses to serve (fail closed).
+    # On a shared server this is the administrator's key only; developers get
+    # their own per-project access tokens (``python -m app.cli token create``).
     api_key: SecretStr | None = None
+    # Access tokens always expire; a leaked token is useful for a bounded time.
+    token_default_days: int = Field(90, ge=1, le=365)
+    token_max_days: int = Field(365, ge=1, le=3650)
 
     log_level: str = "INFO"
 

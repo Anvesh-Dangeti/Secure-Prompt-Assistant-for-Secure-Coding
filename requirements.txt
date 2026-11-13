@@ -41,6 +41,12 @@ httpx==0.28.1                   # also used by FastAPI's TestClient
 # one copy of that code. Run pip from the repository root.
 -e ./libs/secure-prompt-lint
 
+# ---- shared-server connector: our own client, in this repository -------------
+# `spa`, the command a developer runs in their project folder to use a shared
+# server (docs/deployment.md). Standard library only. Installed here so the
+# end-to-end tests can drive it; developers install just this package.
+-e ./libs/spa-connect
+
 # ---- tests -------------------------------------------------------------------
 pytest==9.1.1
 

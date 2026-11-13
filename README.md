@@ -54,7 +54,7 @@ All numbers are in `evaluation/recorded_results.py` and asserted by tests. The d
 | Strategy pilot (90 lab fixes, local 7B model) | 59 verified; CWE-specific guidance led; recursive review cost ~5× the tokens and broke behaviour more often |
 | **Token ladder** (the minimal prompt, live) | **9/10 verified at ~380 tokens per attempt**, against 8/10 at ~2,220 for the full three-message prompt |
 | Fixes to functions that other code calls | 13 verified, **0 broke the caller**; 7 behaviour breaks the scanners missed, caught by the tests |
-| Tool's own security | self-scan: 3 LOW advisories in the subprocess wrapper only; pip-audit of all 35 packages: **0 vulnerabilities**; **817 tests** |
+| Tool's own security | self-scan: 3 LOW advisories in the subprocess wrapper only; pip-audit of all 35 packages: **0 vulnerabilities**; **909 tests** (817 at the final review, before the shared-server connector) |
 
 ## The panel's questions (mid-semester review)
 
@@ -70,7 +70,7 @@ All numbers are in `evaluation/recorded_results.py` and asserted by tests. The d
 
 ```bash
 python -m venv .venv && .venv/Scripts/activate          # Linux: source .venv/bin/activate
-pip install -r requirements.txt                          # from the repository root (installs libs/secure-prompt-lint too)
+pip install -r requirements.txt                          # from the repository root (installs both libs/ packages too)
 python scripts/install_scanners.py                       # Semgrep, Bandit, pip-audit in isolated venvs
 winget install --id Gitleaks.Gitleaks --version 8.30.1 --exact   # or a release binary
 python scripts/fetch_semgrep_rules.py                    # pinned ruleset snapshot (rules/vendor/)
@@ -111,6 +111,29 @@ python -m app.cli lab-verify <id> --source fixtures/flask_vuln_app --replay eval
 python scripts/demo_lifecycle.py ; python scripts/demo_verify.py     # the scripted scenarios
 python -m uvicorn app.main:app --host 127.0.0.1                      # REST API, key via X-API-Key
 ```
+
+### Using a shared server (`spa`)
+
+When the tool runs on a server a team shares, it cannot read a folder on a developer's laptop. The developer runs
+**`spa`** in the project folder instead. `spa` is a standard-library-only client in
+[`libs/spa-connect`](libs/spa-connect). It uploads the folder over HTTPS, and the server scans it and then deletes
+it. Each developer gets their own token, valid for one project, with an expiry and revocation; `SPA_API_KEY` stays
+with the administrator.
+
+```bash
+# administrator, on the server
+python -m app.cli token create --project helpdesk-portal --name rahul-laptop    # printed once
+python -m app.cli token list ; python -m app.cli token revoke <id>
+
+# developer, in the project folder (no scanners or model needed locally)
+spa connect --server https://spa.example.edu      # paste the token (hidden)
+spa scan --label "before the fix" ; spa findings
+spa prompt <id> > prompt.txt                      # only the finding's own file is sent
+spa verify <id>                                   # rescan + checks 1, 2, 3a; exit 0 = VERIFIED_RESOLVED
+```
+
+Server setup (TLS reverse proxy, SSH tunnel for the web interface), what leaves the laptop, the controls and the
+limits are in [`docs/deployment.md`](docs/deployment.md).
 
 ### Strategies
 
@@ -176,7 +199,8 @@ The tool scans untrusted code, so it is itself an attack surface. The full model
 | Prompt injection | repository code wrapped in random-nonce delimiters with an inert-data instruction; instruction-like text flagged |
 | Model server and output (lab) | loopback only, no proxies or redirects, bounded response; output schema-validated, never auto-applied outside a scratch copy |
 | Running a fix (lab, check 3b) | only after checks 1, 2, 3a pass; separate interpreter; `python -P`; allowlisted environment; timeout; CLI only, never over the API |
-| API | key on every route, fails closed when unset; body-size cap; no stack traces returned |
+| API | administrator key or a per-project token on every route; key path fails closed when unset; another project's data answers 404; body-size cap; no stack traces returned |
+| Shared server (`spa`) | tokens stored as hashes, expiring, revocable; https only with certificate checks; no redirects followed; token never an argument and never in the project; uploads skip caches, `.env` files and links; a prompt sends one file |
 | Web interface | loopback peer and `Host` only; key sign-in, constant-time, process-wide lockout; signed HttpOnly SameSite=Strict session; CSRF + Origin check on every POST; CSP `default-src 'none'`, no inline script or style; autoescaped templates; vendored htmx pinned by hash, eval off; no lab mode |
 | Dependencies | pinned; audited with pip-audit (0 known vulnerabilities in the frozen environment); security floors for transitive packages |
 
@@ -188,6 +212,7 @@ The tool scans untrusted code, so it is itself an attack surface. The full model
 |---|---|
 | [`docs/architecture.md`](docs/architecture.md) | Components, data flow, the two modes, checks and verdicts, data model, the library boundary |
 | [`docs/threat_model.md`](docs/threat_model.md) | Assets, adversaries, trust boundaries, threats and controls with their tests, residual risks |
+| [`docs/deployment.md`](docs/deployment.md) | Using a shared server: the `spa` connector, per-project tokens, what leaves the laptop, server setup, limits |
 | [`docs/evaluation.md`](docs/evaluation.md) | Detection, lifecycle, verification, E1 (linter), E2 (strategies), E5 (token ladder), threats to validity |
 | [`docs/related_functions.md`](docs/related_functions.md) | Whether a fix breaks the code around it: the four layers, the evidence, the limits |
 | [`libs/secure-prompt-lint`](libs/secure-prompt-lint) | The published linter: README, rules, extension API, benchmark, `RESEARCH.md` |

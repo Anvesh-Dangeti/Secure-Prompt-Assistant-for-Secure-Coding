@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spa-connect"
+version = "1.0.0"
+description = "Connect a project folder to a shared Secure Prompt Assistant server: scan, get remediation prompts, verify fixes."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+dependencies = []
+keywords = ["security", "sast", "secure-coding", "remediation", "cli"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Environment :: Console",
+]
+
+[project.scripts]
+spa = "spa_connect.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+spa_connect = ["py.typed"]

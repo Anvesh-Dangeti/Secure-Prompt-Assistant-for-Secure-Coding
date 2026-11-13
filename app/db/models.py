@@ -19,6 +19,9 @@ database gains them through ``create_all`` without a migration:
   decorators, ...), never its code: scans keep evidence, not source;
 * ``Verification`` -- one verdict on one attempted fix (the remediation history).
 
+The shared-server connector adds ``AccessToken`` the same way: a developer's
+credential for one project, stored only as a hash.
+
 All queries go through the ORM, which parameterises every value.
 """
 
@@ -279,3 +282,27 @@ class Verification(Base):
     duration_s: Mapped[float | None] = mapped_column(Float)
     proposal: Mapped[dict | None] = mapped_column(JSON)              # lab only: the model's validated answer
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AccessToken(Base):
+    """A developer's credential for exactly one project on a shared server.
+
+    Only the SHA-256 of the token is stored: a copy of the database does not
+    hand out working credentials. ``prefix`` (the first characters) is kept so an
+    administrator can tell tokens apart in a listing without seeing them.
+    """
+
+    __tablename__ = "access_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(80))
+    token_hash: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    prefix: Mapped[str] = mapped_column(String(16))
+    # Required: a token never reaches more than one project (least privilege).
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id"), index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    last_used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    project: Mapped[Project] = relationship()
