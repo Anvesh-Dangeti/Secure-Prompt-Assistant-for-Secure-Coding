@@ -187,7 +187,7 @@ The four layers that protect callers, and what we do not claim, are in
 
 | | |
 |---|---|
-| automated tests | **909 pass, 4 skipped** (symlink and POSIX-permission tests do not run on Windows); 31 are the lint library's own and 50 the `spa` connector's. 817 at the final review, before the shared-server connector |
+| automated tests | **912 pass, 4 skipped** (symlink and POSIX-permission tests do not run on Windows); 31 are the lint library's own and 50 the `spa` connector's |
 | self-scan of `app/`, `dashboard/`, `libs/` (both packages) with our four scanners | 3 LOW advisories, all in the one subprocess wrapper; 0 elsewhere |
 | pip-audit of the frozen application environment (35 packages) | **0 known vulnerabilities** |
 | live public repository (snapshot, 8 Oct, not asserted) | `fportantier/vulpy`: 68 findings in about 11 s, 27 in scope over 6 CWEs |
