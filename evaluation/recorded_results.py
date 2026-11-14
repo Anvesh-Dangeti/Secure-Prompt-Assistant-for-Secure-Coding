@@ -186,7 +186,7 @@ LIVE_VULPY = {
     "unpinned_not_audited": 9,
     "seconds": 11,
 }
-SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 6dbad3d
+SELF_SCAN = {   # app/ scanned by its own four tools, after the fixes in commit 4eff6fb
     "semgrep": 0, "gitleaks": 0, "pip-audit": 0,
     "bandit_low": 3,          # B404 + 2x B603, inherent to the subprocess wrapper
     "fixed_from_self_scan": 3,  # B607 taskkill path, the Semgrep env-taint it caused, B101 asserts
