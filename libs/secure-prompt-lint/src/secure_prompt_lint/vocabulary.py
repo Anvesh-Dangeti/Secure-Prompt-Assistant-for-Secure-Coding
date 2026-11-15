@@ -14,6 +14,12 @@ hard-coded password, is checked as CWE-798). The bundled table covers the ten
 weaknesses the Secure Prompt Assistant scopes; ``use_vocabulary()`` swaps in
 another table of the same shape, which is how a study extends the linter to new
 CWEs without touching code.
+
+Each entry may also carry sentence ``templates``. The fix-its use three of them
+(``explain``, ``directive``, ``guard``); the prompt templates in
+``secure_prompt_lint.templates`` also use ``risk``, ``mitre`` and ``rule``. An
+optional top-level ``generic`` entry words a prompt for a weakness the table
+does not cover.
 """
 
 from __future__ import annotations
@@ -26,7 +32,8 @@ from importlib import resources
 from pathlib import Path
 
 GENERIC = "an unclassified weakness"
-TEMPLATE_FIELDS = ("explain", "directive", "guard")
+#: every sentence template an entry may carry; the fix-its use explain, directive and guard
+TEMPLATE_FIELDS = ("explain", "risk", "directive", "guard", "mitre", "rule")
 
 
 class VocabularyError(ValueError):
@@ -39,7 +46,7 @@ class VocabularyEntry:
     name: str
     aliases: tuple[str, ...]
     vocabulary: tuple[str, ...]
-    #: sentence templates the fix-its insert: "explain" (A1), "directive" (A3), "guard" (A2)
+    #: sentence templates; the fix-its insert "explain" (A1), "directive" (A3) and "guard" (A2)
     templates: Mapping[str, str] = field(default_factory=dict)
 
     @property
@@ -54,6 +61,8 @@ class Vocabulary:
     entries: dict[str, VocabularyEntry]
     cwe_aliases: dict[str, str]
     slot_defaults: dict[str, str] = field(default_factory=dict)
+    #: name and templates for a weakness the table does not cover (the prompt templates use it)
+    generic: dict[str, str] = field(default_factory=dict)
 
 
 def _strings(value: object, where: str) -> tuple[str, ...]:
@@ -84,7 +93,11 @@ def parse_vocabulary(data: object) -> Vocabulary:
         if not isinstance(value, dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in value.items()):
             raise VocabularyError(f"'{name}' must map strings to strings")
         maps[name] = dict(value)
-    return Vocabulary(entries, maps["cwe_aliases"], maps["slot_defaults"])
+    generic = data.get("generic", {})
+    if not isinstance(generic, dict) or not all(
+            k in ("name", *TEMPLATE_FIELDS) and isinstance(v, str) for k, v in generic.items()):
+        raise VocabularyError(f"'generic' must map name, {', '.join(TEMPLATE_FIELDS)} to strings")
+    return Vocabulary(entries, maps["cwe_aliases"], maps["slot_defaults"], dict(generic))
 
 
 def load_vocabulary(path: str | Path | None = None) -> Vocabulary:

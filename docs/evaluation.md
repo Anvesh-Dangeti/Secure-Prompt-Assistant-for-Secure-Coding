@@ -146,6 +146,9 @@ itself 54, inert-data instruction 47, directive 38, scope 37, output contract
 35, opening 28, guard 26, classification 17. **The floor is the code**, a
 median of 54 tokens, which no variant can remove.
 
+The published library reproduces this table on its own, from the same 24
+findings and the same templates: `python -m secure_prompt_lint.templates --ladder`.
+
 **Live, same model, same checks, after the finding-23 fix (40 trials):**
 
 | Strategy | Verified | Tokens per fix attempt (whole conversation) | Verified per 1k tokens |
@@ -187,7 +190,7 @@ The four layers that protect callers, and what we do not claim, are in
 
 | | |
 |---|---|
-| automated tests | **912 pass, 4 skipped** (symlink and POSIX-permission tests do not run on Windows); 31 are the lint library's own and 50 the `spa` connector's |
+| automated tests | **928 pass, 4 skipped** (symlink and POSIX-permission tests do not run on Windows); 42 are the lint library's own and 50 the `spa` connector's |
 | self-scan of `app/`, `dashboard/`, `libs/` (both packages) with our four scanners | 3 LOW advisories, all in the one subprocess wrapper; 0 elsewhere |
 | pip-audit of the frozen application environment (35 packages) | **0 known vulnerabilities** |
 | live public repository (snapshot, 8 Oct, not asserted) | `fportantier/vulpy`: 68 findings in about 11 s, 27 in scope over 6 CWEs |
@@ -215,6 +218,7 @@ python -m app.cli scan-dir fixtures/flask_vuln_app --ground-truth
 python scripts/demo_lifecycle.py ; python scripts/demo_verify.py
 python -m evaluation.e1_mutation                          # E1, no model, ~2 s
 python -m evaluation.e5_tokens                            # E5 static, no model
+python -m secure_prompt_lint.templates --ladder           # the same table from the published library alone
 python -m evaluation.related_functions                    # section 7, from the committed pilot rows
 # E2 / E5 live (needs Ollama + the model), always on a throwaway database:
 python -m evaluation.e2_strategies --strategies S2,S7,S7a,S7m --out evaluation/results/e5_tokens.json

@@ -17,6 +17,9 @@ review turns verified 8/10 at about six times the tokens. That is suggestive,
 not conclusive.
 
 **Start here.**
+- Generate the prompts we measured with `secure_prompt_lint.templates`: all eleven
+  strategies for the 24 bundled findings (`--bundled N`, or `bundled_findings()` with
+  `build_prompt()`). They are byte-identical to the prompts behind our numbers.
 - Take prompts that fail one rule at a time (the benchmark mutants are ready-made).
 - Send each to several models, and verify every fix independently: re-scan, then
   behaviour tests.

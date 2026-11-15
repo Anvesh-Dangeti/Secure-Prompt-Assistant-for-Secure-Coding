@@ -198,4 +198,5 @@ TESTS_AT_MIDSEM = TESTS     # the mid-semester decks show this count
 TESTS_FINAL = 817           # the final review: the whole suite (application + lint library), full run
 # After the final review: the shared-server connector (access tokens, the prompt route, libs/spa-connect).
 TESTS_WITH_CONNECTOR = 909  # full run: 909 passed, 4 skipped (2 symlink, 2 POSIX-only on Windows)
-TESTS_AT_SUBMISSION = 912   # full run at submission (15 Nov): 912 passed, 4 skipped; the redesigned final deck's tests
+TESTS_AT_SUBMISSION = 928   # full run at submission (15 Nov): 928 passed, 4 skipped; adds the redesigned final deck's
+                            # tests and the published prompt templates' (library 11, parity 5)

@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "secure-prompt-lint"
-version = "1.0.1"
-description = "A deterministic linter for security-remediation prompts: constituent rules, prompt-injection hygiene, token budget, and fix-its."
+version = "1.1.0"
+description = "A deterministic linter for security-remediation prompts (constituent rules, prompt-injection hygiene, token budget, fix-its) and the prompt templates it was built with."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 dependencies = []
-keywords = ["security", "prompt", "linter", "llm", "secure-coding", "cwe", "prompt-injection"]
+keywords = ["security", "prompt", "linter", "llm", "secure-coding", "cwe", "prompt-injection", "prompt-templates"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Topic :: Security",

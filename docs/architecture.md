@@ -47,7 +47,8 @@ scan that could not examine a finding can never mark it resolved.
    └──────────────────────────────────────────┬──────────────────────────────────────────────────────────┘
                                               │
    app/ai/: context · guidance · explainer · strategies/ · prompt_builder · providers/ (template, Ollama)
-            linter/ ──► libs/secure-prompt-lint  (rules, engine, fix-its, delimiting, injection, secrets)
+            linter/, strategies/, sentences ──► libs/secure-prompt-lint  (rules, engine, fix-its, delimiting,
+                                                 injection, secrets; the prompt templates S0–S8, S7a, S7m)
    app/sandbox/ (lab mode only): apply a model's fix to a scratch copy; run the behaviour tests (check 3b)
    app/db/: SQLite via SQLAlchemy ORM (no raw SQL)
 ```
@@ -63,7 +64,7 @@ scan that could not examine a finding can never mark it resolved.
 | `app/verification/` | symbol facts captured at scan time, scan comparison, the four checks, the verdict, remediation history |
 | `app/sandbox/` | lab mode: splice a model's proposal into a scratch copy, rescan, run the behaviour tests |
 | `dashboard/` | read models (`data.py`) and validated actions (`actions.py`) shared by the web pages |
-| `libs/secure-prompt-lint/` | the prompt linter as a stand-alone, dependency-free library; the application imports it (one copy of the code) |
+| `libs/secure-prompt-lint/` | the prompt linter and the prompt templates as a stand-alone, dependency-free library; the application imports both (one copy of the code) |
 | `libs/spa-connect/` | `spa`, the command a developer runs in a project folder to use a shared server (§10); standard library only, never imports the application |
 | `app/access_tokens.py`, `app/api/prompts.py` | per-project access tokens (stored as hashes); a prompt built from the one file a connector sends |
 | `evaluation/` | ground truth, scripted scenarios, experiments E1, E2, E5, the related-functions evidence, and `recorded_results.py` (every number we report, asserted by tests) |
@@ -161,14 +162,22 @@ is in [`related_functions.md`](related_functions.md).
 `libs/secure-prompt-lint` contains everything about judging a prompt: the
 constituent rules A1–A7, the hygiene rules B1–B5 and C1, the fix-its, the
 nonce delimiting, the injection heuristic, the secret patterns, the token
-estimate and the mutation benchmark. It has no third-party dependencies and
-never imports the application (a test enforces this).
+estimate and the mutation benchmark. Since version 1.1 it also holds the
+prompt templates (`secure_prompt_lint.templates`): the sentences, the eleven
+strategies and the 24 fixture findings they were measured on. It has no
+third-party dependencies and never imports the application (a test enforces
+this).
 
-The application adds what only it knows: an expectation bound to a real
-finding (its entities, symbol and file) and the guidance sentences, exported to
-the library by `scripts/export_lint_data.py`. Parity tests check that the two
-render identical sentences and reproduce identical benchmark results. The
-library is also published on its own: <https://github.com/Anvesh-Dangeti/secure-prompt-lint>.
+The application adds what only it knows: the context extracted from a real
+finding (entities from `ast`, the window, the dependency group), an expectation
+bound to it, the optional model explanation, and the guidance table, exported to
+the library by `scripts/export_lint_data.py`. The strategies read only
+attributes, so the application passes its own `FindingContext` and
+`CweGuidance` straight in. Parity tests check that the library, using only its
+bundled data, builds byte-identical prompts and lint reports for all 24 findings
+and all eleven strategies, renders identical sentences, and reproduces the E1
+benchmark and the static token ladder. The library is also published on its own:
+<https://github.com/Anvesh-Dangeti/secure-prompt-lint>.
 
 ## 9. Technology
 

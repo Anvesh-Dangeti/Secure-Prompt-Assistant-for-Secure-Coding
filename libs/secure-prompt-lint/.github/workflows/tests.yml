@@ -21,3 +21,4 @@ jobs:
       - run: python -m pip install . pytest
       - run: python -m pytest -q
       - run: python -m secure_prompt_lint.bench
+      - run: python -m secure_prompt_lint.templates --ladder

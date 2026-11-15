@@ -21,6 +21,10 @@ The rules:
 * **C1** -- a token budget.
 
 No model is involved anywhere: the same prompt always gets the same report.
+
+``secure_prompt_lint.templates`` (new in 1.1) holds the prompt templates the
+linter was built with: eleven ways of asking an assistant to fix one finding,
+from a bare scanner report to the minimal prompt that keeps every constituent.
 """
 
 from __future__ import annotations
@@ -34,7 +38,7 @@ from secure_prompt_lint.rules import RuleContext, describe_rules, register_rule,
 from secure_prompt_lint.tokens import estimate_tokens
 from secure_prompt_lint.vocabulary import load_vocabulary, use_vocabulary
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 __all__ = [
     "CONSTITUENTS", "ERROR", "INERT_INSTRUCTION", "RULES", "WARNING", "LintExpectation", "LintIssue", "LintReport",

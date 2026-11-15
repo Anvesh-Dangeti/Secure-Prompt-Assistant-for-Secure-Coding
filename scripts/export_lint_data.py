@@ -1,18 +1,23 @@
 """Export the linter's data from this application into the stand-alone library.
 
-    python scripts/export_lint_data.py          # rewrite both bundled files
-    python scripts/export_lint_data.py --check  # exit 1 if either is out of date
+    python scripts/export_lint_data.py          # rewrite the bundled files
+    python scripts/export_lint_data.py --check  # exit 1 if any is out of date
 
-Two files ship inside ``libs/secure-prompt-lint/src/secure_prompt_lint/data/``:
+Three files ship inside ``libs/secure-prompt-lint/src/secure_prompt_lint/data/``:
 
-* ``cwe_vocabulary.json`` -- what the constituent rules look for, per CWE:
-  name, aliases, handling-directive vocabulary, and the child-to-parent CWE
-  aliases. ``app/mapping/data/cwe_guidance.yaml`` stays the one place this
-  wording is edited (it also holds the prompt sentences), but the library has
-  no dependency on this application, so the part it needs is exported.
+* ``cwe_vocabulary.json`` -- per CWE: name, aliases, handling-directive
+  vocabulary and the sentence templates the prompts and fix-its are worded
+  from, plus the generic wording, the slot defaults and the child-to-parent
+  CWE aliases. ``app/mapping/data/cwe_guidance.yaml`` stays the one place this
+  wording is edited, but the library has no dependency on this application,
+  so it is exported.
 * ``e1_benchmark.json`` -- the 24 mutation-benchmark cases: the S7 prompt for
   each real fixture finding (secrets already redacted) and the expectation it
   is linted against. ``python -m secure_prompt_lint.bench`` reproduces E1 from it.
+* ``findings.json`` -- the same 24 findings as prompt-template input (the
+  context each prompt is built from), so ``python -m secure_prompt_lint.templates
+  --ladder`` reproduces the static token ladder (E5) and anyone can regenerate
+  every strategy's prompt for them.
 
 A test runs the ``--check`` comparison, so the bundled copies cannot drift.
 """
@@ -28,23 +33,29 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from secure_prompt_lint.bench import case_to_dict  # noqa: E402
+from secure_prompt_lint.templates import Finding  # noqa: E402
+from secure_prompt_lint.vocabulary import TEMPLATE_FIELDS  # noqa: E402
 
-from app.ai.guidance import SLOT_DEFAULTS, all_guidance  # noqa: E402
+from app.ai.guidance import SLOT_DEFAULTS, all_guidance, guidance_for  # noqa: E402
 from app.mapping.mapper import tables  # noqa: E402
-from evaluation.e1_mutation import cases  # noqa: E402
+from evaluation.e1_mutation import cases, contexts  # noqa: E402
 
 DATA = ROOT / "libs" / "secure-prompt-lint" / "src" / "secure_prompt_lint" / "data"
-# The sentences a fix-it inserts for A1 (binding), A3 (directive) and A2 (guard).
-TEMPLATE_FIELDS = ("explain", "directive", "guard")
+
+
+def _flat(text: str) -> str:
+    return " ".join(text.split())
 
 
 def vocabulary() -> dict:
+    generic = guidance_for(None)
     return {
         "source": "Secure Prompt Assistant guidance table (cwe_guidance.yaml), exported by "
                   "scripts/export_lint_data.py",
         "weaknesses": {g.cwe: {"name": g.name, "aliases": list(g.aliases), "vocabulary": list(g.vocabulary),
-                               "templates": {f: " ".join(g.texts[f].split()) for f in TEMPLATE_FIELDS}}
+                               "templates": {f: _flat(g.texts[f]) for f in TEMPLATE_FIELDS}}
                        for g in all_guidance()},
+        "generic": {"name": generic.texts["name"], **{f: _flat(generic.texts[f]) for f in TEMPLATE_FIELDS}},
         "cwe_aliases": dict(sorted(tables().aliases.items())),
         "slot_defaults": dict(SLOT_DEFAULTS),
     }
@@ -60,11 +71,30 @@ def benchmark() -> dict:
     }
 
 
+def _finding_ids(ctxs: list) -> list[str]:
+    """tool:rule:file:symbol, with a longer rule name where two rules share their last part."""
+    def ident(c, parts: int) -> str:
+        rule = ".".join(c.rule_id.split(".")[-parts:])
+        return f"{c.tool}:{rule}:{c.file_path}:{c.symbol or c.start_line}"
+    short = [ident(c, 1) for c in ctxs]
+    return [ident(c, 2) if short.count(s) > 1 else s for c, s in zip(ctxs, short, strict=True)]
+
+
+def findings() -> dict:
+    ctxs = contexts()
+    return {
+        "source": "the 24 in-scope findings four scanners report on the Secure Prompt Assistant's seeded Flask "
+                  "fixture, as the context each prompt is built from (code comments removed, secrets redacted)",
+        "findings": [{"id": ident, "finding": Finding.from_context(c).to_dict()}
+                     for ident, c in zip(_finding_ids(ctxs), ctxs, strict=True)],
+    }
+
+
 def _render(data: dict) -> str:
     return json.dumps(data, indent=2, ensure_ascii=False) + "\n"
 
 
-FILES = {"cwe_vocabulary.json": vocabulary, "e1_benchmark.json": benchmark}
+FILES = {"cwe_vocabulary.json": vocabulary, "e1_benchmark.json": benchmark, "findings.json": findings}
 
 
 def stale() -> list[str]:

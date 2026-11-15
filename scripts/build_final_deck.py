@@ -473,7 +473,7 @@ def slide_divider(prs, n):
     for i, (q, a) in enumerate((("How low can the token cost go?", "a ladder of shorter prompts, measured"),
                                 ("Does fixing one function break the code around it?",
                                  "four safeguards, and evidence from 90 fixes"),
-                                ("What can others build on?", "our prompt checker, published as an open library"))):
+                                ("What can others build on?", "our checker and prompt templates, as an open library"))):
         x = MX + i * 4.1
         card(s, x, 2.75, 3.9, 2.25, INK2)
         circle(s, x + 0.3, 3.0, 0.55, str(i + 1), fill=GREEN, size=16, font=HEAD)
@@ -628,13 +628,12 @@ def slide_callers(prs, n):
 def slide_library(prs, n):
     s = new_slide(prs)
     tag(s, SINCE)
-    headline(s, "Our prompt checker is now a free, open library")
-    subline(s, "At mid-sem we said others could build on our prompt checker. It is now published on its own, and "
-               "our tool uses the same code.")
-    for i, (title, body) in enumerate((("13 rules", "safety parts, clean prompts, token budget"),
+    headline(s, "Checker and prompt templates: a free, open library")
+    subline(s, "Published with the prompts we measured; our tool runs the same code, so others get what we tested.")
+    for i, (title, body) in enumerate((("Prompt templates", "all 9 ways of asking, plus our short ones"),
+                                       ("13 rules", "safety parts, clean prompts, token budget"),
                                        ("Fix-its", "puts the missing sentences back"),
                                        ("Extend it", "add rules or bug types without editing it"),
-                                       ("Command line", "can stop a build when a prompt fails"),
                                        ("A benchmark", "288 edited prompts reproduce our results"),
                                        ("Open problems", "a list of where to start next"))):
         col, row = i % 3, i // 3
@@ -654,8 +653,10 @@ def slide_library(prs, n):
            ("   open to anyone who wants to continue this research", {"size": 15})]], anchor=MSO_ANCHOR.MIDDLE)
     page(s, n)
     notes(s, f"""At mid-sem we said the checker would be what others can build on. It is now a stand-alone library at
-    {LIBRARY_URL}; our tool imports it, so there is one copy of that code. It ships a benchmark that reproduces our
-    numbers and a list of open research problems.""")
+    {LIBRARY_URL}; our tool imports it, so there is one copy of that code. Since version 1.1 it also holds our prompt
+    templates: all nine ways of asking plus our two short prompts, exactly as we measured them, with the 24 real
+    findings, so anyone can regenerate our prompts and run them on another AI. It ships a benchmark that reproduces
+    our numbers and a list of open research problems.""")
 
 
 def slide_reproduce(prs, n):
@@ -684,7 +685,8 @@ def slide_reproduce(prs, n):
             size=15)
     page(s, n)
     notes(s, """The one-line prompt from the demo fails with four safety parts missing; the fix-its put them back and
-    it passes. The benchmark command reproduces the full experiment in a few seconds.""")
+    it passes. The benchmark command reproduces the full experiment in a few seconds, and the templates command
+    reproduces the token sizes of the shorter prompts the same way.""")
 
 
 def slide_flaw(prs, n):
@@ -841,8 +843,9 @@ def slide_requirements(prs, n):
         circle(s, x + 0.2, y + 0.2, 0.38, "✓", fill=GREEN, size=13)
         text(s, x + 0.7, y + 0.14, 2.1, 0.98, [[(req, {"bold": True, "size": 14})],
                                               [(how, {"size": 12, "color": GREY})]], spacing=0.98, after=3)
-    callout(s, 6.0, "Beyond the brief: shorter prompts measured, an open checker library, a team server, and a "
-                    "structure check that catches fake fixes every scanner accepts.", h=0.85, fill=GREEN_TINT, size=15)
+    callout(s, 6.0, "Beyond the brief: shorter prompts measured, an open library of our checker and prompts, a team "
+                    "server, and a structure check that catches fake fixes every scanner accepts.", h=0.85,
+            fill=GREEN_TINT, size=15)
     page(s, n)
     notes(s, "The twelve requirements from the project brief, and where each is met.")
 
@@ -1012,9 +1015,9 @@ def slide_answers(prs, n):
         ("Why not run the project's own tests in developer mode?",
          "The scanned code is untrusted: running it on our side would let it do anything. Its tests belong in the "
          "developer's own build pipeline; our verdict says that check was not run."),
-        ("Why publish the checker separately?",
-         "So others can use and extend it without our whole tool, and reproduce our numbers with its benchmark. Our "
-         "tool imports the same library."),
+        ("Why publish the checker and prompts separately?",
+         "So others can use and extend them without our whole tool, regenerate the exact prompts we measured, and "
+         "reproduce our numbers. Our tool imports the same library."),
         ("Your own full prompt did not win the pilot. What is new?",
          "The test bench that measures ways of asking on real fixes with independent checks, the checker, and the "
          "minimal prompt, the most token-efficient way we measured."),

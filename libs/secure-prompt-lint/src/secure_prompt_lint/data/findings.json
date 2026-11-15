@@ -1,0 +1,729 @@
+{
+  "source": "the 24 in-scope findings four scanners report on the Secure Prompt Assistant's seeded Flask fixture, as the context each prompt is built from (code comments removed, secrets redacted)",
+  "findings": [
+    {
+      "id": "semgrep:sql-injection-db-cursor-execute:app.py:get_user",
+      "finding": {
+        "cwe": "CWE-89",
+        "file_path": "app.py",
+        "code": "@app.route(\"/user\")\ndef get_user():\n    user_id = request.args.get(\"id\")\n    conn = sqlite3.connect(\"app.db\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)\n    return {\"rows\": cursor.fetchall()}",
+        "window_start": 34,
+        "window_end": 41,
+        "window_kind": "function",
+        "symbol": "get_user",
+        "sources": [
+          {
+            "name": "user_id",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "cursor.execute"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.django.security.injection.sql.sql-injection-using-db-cursor-execute.sql-injection-db-cursor-execute",
+        "severity": "MEDIUM",
+        "message": "User-controlled data from a request is passed to 'execute()'. This could lead to a SQL injection and therefore protected information could be leaked. Instead, use django's QuerySets, which are built with query parameterization and therefore not vulnerable to sql injection. For example, you could use `Entry.objects.filter(date=2006)`.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:tainted-sql-string:app.py:get_user",
+      "finding": {
+        "cwe": "CWE-89",
+        "file_path": "app.py",
+        "code": "@app.route(\"/user\")\ndef get_user():\n    user_id = request.args.get(\"id\")\n    conn = sqlite3.connect(\"app.db\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)\n    return {\"rows\": cursor.fetchall()}",
+        "window_start": 34,
+        "window_end": 41,
+        "window_kind": "function",
+        "symbol": "get_user",
+        "sources": [
+          {
+            "name": "user_id",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "cursor.execute"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.flask.security.injection.tainted-sql-string.tainted-sql-string",
+        "severity": "HIGH",
+        "message": "Detected user input used to manually construct a SQL string. This is usually bad practice because manual construction could accidentally result in a SQL injection. An attacker could use a SQL injection to steal or modify contents of the database. Instead, use a parameterized query which is available by default in most database engines. Alternatively, consider using an object-relational mapper (ORM) such as SQLAlchemy which will protect your queries.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:subprocess-injection:app.py:ping_host",
+      "finding": {
+        "cwe": "CWE-78",
+        "file_path": "app.py",
+        "code": "@app.route(\"/ping\")\ndef ping_host():\n    host = request.args.get(\"host\")\n    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)\n    return output",
+        "window_start": 44,
+        "window_end": 49,
+        "window_kind": "function",
+        "symbol": "ping_host",
+        "sources": [
+          {
+            "name": "host",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "subprocess.check_output"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.flask.security.injection.subprocess-injection.subprocess-injection",
+        "severity": "HIGH",
+        "message": "Detected user input entering a `subprocess` call unsafely. This could result in a command injection vulnerability. An attacker could use this vulnerability to execute arbitrary commands on the host, which allows them to download malware, scan sensitive data, or run any command they wish on the server. Do not let users choose the command to run. In general, prefer to use Python API versions of system commands. If you must use subprocess, use a dictionary to allowlist a set of commands.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:dangerous-subprocess-use:app.py:ping_host",
+      "finding": {
+        "cwe": "CWE-78",
+        "file_path": "app.py",
+        "code": "@app.route(\"/ping\")\ndef ping_host():\n    host = request.args.get(\"host\")\n    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)\n    return output",
+        "window_start": 44,
+        "window_end": 49,
+        "window_kind": "function",
+        "symbol": "ping_host",
+        "sources": [
+          {
+            "name": "host",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "subprocess.check_output"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.lang.security.dangerous-subprocess-use.dangerous-subprocess-use",
+        "severity": "HIGH",
+        "message": "Detected subprocess function 'check_output' with user controlled data. A malicious actor could leverage this to perform command injection. You may consider using 'shlex.escape()'.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:subprocess-shell-true:app.py:ping_host",
+      "finding": {
+        "cwe": "CWE-78",
+        "file_path": "app.py",
+        "code": "@app.route(\"/ping\")\ndef ping_host():\n    host = request.args.get(\"host\")\n    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)\n    return output",
+        "window_start": 44,
+        "window_end": 49,
+        "window_kind": "function",
+        "symbol": "ping_host",
+        "sources": [
+          {
+            "name": "host",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "subprocess.check_output"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.lang.security.audit.subprocess-shell-true.subprocess-shell-true",
+        "severity": "HIGH",
+        "message": "Found 'subprocess' function 'check_output' with 'shell=True'. This is dangerous because this call will spawn the command using a shell process. Doing so propagates current shell settings and variables, which makes it much easier for a malicious actor to execute commands. Use 'shell=False' instead.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:directly-returned-format-string:app.py:greet",
+      "finding": {
+        "cwe": "CWE-79",
+        "file_path": "app.py",
+        "code": "@app.route(\"/greet\")\ndef greet():\n    name = request.args.get(\"name\", \"\")\n    return \"<h1>Hello, %s!</h1>\" % name",
+        "window_start": 52,
+        "window_end": 56,
+        "window_kind": "function",
+        "symbol": "greet",
+        "sources": [
+          {
+            "name": "name",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.flask.security.audit.directly-returned-format-string.directly-returned-format-string",
+        "severity": "MEDIUM",
+        "message": "Detected Flask route directly returning a formatted string. This is subject to cross-site scripting if user input can reach the string. Consider using the template engine instead and rendering pages with 'render_template()'.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:raw-html-format.raw-html-format:app.py:greet",
+      "finding": {
+        "cwe": "CWE-79",
+        "file_path": "app.py",
+        "code": "@app.route(\"/greet\")\ndef greet():\n    name = request.args.get(\"name\", \"\")\n    return \"<h1>Hello, %s!</h1>\" % name",
+        "window_start": 52,
+        "window_end": 56,
+        "window_kind": "function",
+        "symbol": "greet",
+        "sources": [
+          {
+            "name": "name",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.django.security.injection.raw-html-format.raw-html-format",
+        "severity": "MEDIUM",
+        "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`django.shortcuts.render`) which will safely render HTML instead.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:raw-html-concat.raw-html-format:app.py:greet",
+      "finding": {
+        "cwe": "CWE-79",
+        "file_path": "app.py",
+        "code": "@app.route(\"/greet\")\ndef greet():\n    name = request.args.get(\"name\", \"\")\n    return \"<h1>Hello, %s!</h1>\" % name",
+        "window_start": 52,
+        "window_end": 56,
+        "window_kind": "function",
+        "symbol": "greet",
+        "sources": [
+          {
+            "name": "name",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.flask.security.injection.raw-html-concat.raw-html-format",
+        "severity": "MEDIUM",
+        "message": "Detected user input flowing into a manually constructed HTML string. You may be accidentally bypassing secure methods of rendering HTML by manually constructing HTML and this could create a cross-site scripting vulnerability, which could let attackers steal sensitive user data. To be sure this is safe, check that the HTML is rendered safely. Otherwise, use templates (`flask.render_template`) which will safely render HTML instead.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:path-traversal-open:app.py:download_file",
+      "finding": {
+        "cwe": "CWE-22",
+        "file_path": "app.py",
+        "code": "@app.route(\"/files\")\ndef download_file():\n    filename = request.args.get(\"name\")\n    with open(os.path.join(DATA_DIR, filename), encoding=\"utf-8\") as handle:\n        return handle.read()",
+        "window_start": 59,
+        "window_end": 64,
+        "window_kind": "function",
+        "symbol": "download_file",
+        "sources": [
+          {
+            "name": "filename",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "open",
+          "os.path.join"
+        ],
+        "targets": [],
+        "constants": [
+          "DATA_DIR"
+        ],
+        "tool": "semgrep",
+        "rule_id": "python.flask.security.injection.path-traversal-open.path-traversal-open",
+        "severity": "HIGH",
+        "message": "Found request data in a call to 'open'. Ensure the request data is validated or sanitized, otherwise it could result in path traversal attacks.",
+        "owasp": "A01:2021 Broken Access Control",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:debug-enabled:app.py:__main__",
+      "finding": {
+        "cwe": "CWE-94",
+        "file_path": "app.py",
+        "code": "if __name__ == \"__main__\":\n    app.run(debug=True)",
+        "window_start": 81,
+        "window_end": 83,
+        "window_kind": "main-block",
+        "symbol": "__main__",
+        "sources": [],
+        "sinks": [
+          "app.run"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.flask.security.audit.debug-enabled.debug-enabled",
+        "severity": "MEDIUM",
+        "message": "Detected Flask app with debug=True. Do not deploy to production with this flag enabled as it will leak sensitive information. Instead, consider using Flask configuration variables or setting 'debug' using system environment variables.",
+        "owasp": "A05:2021 Security Misconfiguration",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:insecure-hash-algorithm-md5:crypto_utils.py:hash_password",
+      "finding": {
+        "cwe": "CWE-327",
+        "file_path": "crypto_utils.py",
+        "code": "def hash_password(password):\n    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()",
+        "window_start": 11,
+        "window_end": 13,
+        "window_kind": "function",
+        "symbol": "hash_password",
+        "sources": [
+          {
+            "name": "password",
+            "origin": "the caller of `hash_password` (parameter `password`)"
+          }
+        ],
+        "sinks": [
+          "hashlib.md5"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.lang.security.insecure-hash-algorithms-md5.insecure-hash-algorithm-md5",
+        "severity": "MEDIUM",
+        "message": "Detected MD5 hash algorithm which is considered insecure. MD5 is not collision resistant and is therefore not suitable as a cryptographic signature. Use SHA256 or SHA3 instead.",
+        "owasp": "A02:2021 Cryptographic Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "semgrep:md5-used-as-password:crypto_utils.py:hash_password",
+      "finding": {
+        "cwe": "CWE-327",
+        "file_path": "crypto_utils.py",
+        "code": "def hash_password(password):\n    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()",
+        "window_start": 11,
+        "window_end": 13,
+        "window_kind": "function",
+        "symbol": "hash_password",
+        "sources": [
+          {
+            "name": "password",
+            "origin": "the caller of `hash_password` (parameter `password`)"
+          }
+        ],
+        "sinks": [
+          "hashlib.md5"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "semgrep",
+        "rule_id": "python.lang.security.audit.md5-used-as-password.md5-used-as-password",
+        "severity": "MEDIUM",
+        "message": "It looks like MD5 is used as a password hash. MD5 is not considered a secure password hash because it can be cracked by an attacker in a short amount of time. Use a suitable password hashing function such as scrypt. You can use `hashlib.scrypt`.",
+        "owasp": "A02:2021 Cryptographic Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B403:app.py:pickle",
+      "finding": {
+        "cwe": "CWE-502",
+        "file_path": "app.py",
+        "code": "import pickle",
+        "window_start": 14,
+        "window_end": 14,
+        "window_kind": "statement",
+        "symbol": "pickle",
+        "sources": [],
+        "sinks": [],
+        "targets": [
+          "pickle"
+        ],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B403",
+        "severity": "LOW",
+        "message": "Consider possible security implications associated with pickle module.",
+        "owasp": "A08:2021 Software and Data Integrity Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B404:app.py:subprocess",
+      "finding": {
+        "cwe": "CWE-78",
+        "file_path": "app.py",
+        "code": "import subprocess",
+        "window_start": 16,
+        "window_end": 16,
+        "window_kind": "statement",
+        "symbol": "subprocess",
+        "sources": [],
+        "sinks": [],
+        "targets": [
+          "subprocess"
+        ],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B404",
+        "severity": "LOW",
+        "message": "Consider possible security implications associated with the subprocess module.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B608:app.py:get_user",
+      "finding": {
+        "cwe": "CWE-89",
+        "file_path": "app.py",
+        "code": "@app.route(\"/user\")\ndef get_user():\n    user_id = request.args.get(\"id\")\n    conn = sqlite3.connect(\"app.db\")\n    cursor = conn.cursor()\n    cursor.execute(\"SELECT name, email FROM users WHERE id = '%s'\" % user_id)\n    return {\"rows\": cursor.fetchall()}",
+        "window_start": 34,
+        "window_end": 41,
+        "window_kind": "function",
+        "symbol": "get_user",
+        "sources": [
+          {
+            "name": "user_id",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "cursor.execute"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B608",
+        "severity": "MEDIUM",
+        "message": "Possible SQL injection vector through string-based query construction.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B602:app.py:ping_host",
+      "finding": {
+        "cwe": "CWE-78",
+        "file_path": "app.py",
+        "code": "@app.route(\"/ping\")\ndef ping_host():\n    host = request.args.get(\"host\")\n    output = subprocess.check_output(\"ping -c 1 \" + host, shell=True)\n    return output",
+        "window_start": 44,
+        "window_end": 49,
+        "window_kind": "function",
+        "symbol": "ping_host",
+        "sources": [
+          {
+            "name": "host",
+            "origin": "the HTTP request (`request.args`)"
+          }
+        ],
+        "sinks": [
+          "subprocess.check_output"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B602",
+        "severity": "HIGH",
+        "message": "subprocess call with shell=True identified, security issue.",
+        "owasp": "A03:2021 Injection",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B301:app.py:restore_session",
+      "finding": {
+        "cwe": "CWE-502",
+        "file_path": "app.py",
+        "code": "@app.route(\"/session\", methods=[\"POST\"])\ndef restore_session():\n    blob = request.get_data()\n    return {\"session\": str(pickle.loads(blob))}",
+        "window_start": 67,
+        "window_end": 71,
+        "window_kind": "function",
+        "symbol": "restore_session",
+        "sources": [
+          {
+            "name": "blob",
+            "origin": "the HTTP request (`request.get_data`)"
+          }
+        ],
+        "sinks": [
+          "pickle.loads"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B301",
+        "severity": "MEDIUM",
+        "message": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
+        "owasp": "A08:2021 Software and Data Integrity Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B201:app.py:__main__",
+      "finding": {
+        "cwe": "CWE-94",
+        "file_path": "app.py",
+        "code": "if __name__ == \"__main__\":\n    app.run(debug=True)",
+        "window_start": 81,
+        "window_end": 83,
+        "window_kind": "main-block",
+        "symbol": "__main__",
+        "sources": [],
+        "sinks": [
+          "app.run"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B201",
+        "severity": "HIGH",
+        "message": "A Flask app appears to be run with debug=True, which exposes the Werkzeug debugger and allows the execution of arbitrary code.",
+        "owasp": "A05:2021 Security Misconfiguration",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B105:config.py:API_TOKEN",
+      "finding": {
+        "cwe": "CWE-798",
+        "file_path": "config.py",
+        "code": "API_TOKEN = \"<REDACTED>\"",
+        "window_start": 10,
+        "window_end": 10,
+        "window_kind": "statement",
+        "symbol": "API_TOKEN",
+        "sources": [],
+        "sinks": [],
+        "targets": [
+          "API_TOKEN"
+        ],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B105",
+        "severity": "LOW",
+        "message": "Possible hardcoded password: '<REDACTED>'",
+        "owasp": "A07:2021 Identification and Authentication Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B324:crypto_utils.py:hash_password",
+      "finding": {
+        "cwe": "CWE-327",
+        "file_path": "crypto_utils.py",
+        "code": "def hash_password(password):\n    return hashlib.md5(password.encode(\"utf-8\")).hexdigest()",
+        "window_start": 11,
+        "window_end": 13,
+        "window_kind": "function",
+        "symbol": "hash_password",
+        "sources": [
+          {
+            "name": "password",
+            "origin": "the caller of `hash_password` (parameter `password`)"
+          }
+        ],
+        "sinks": [
+          "hashlib.md5"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B324",
+        "severity": "HIGH",
+        "message": "Use of weak MD5 hash for security. Consider usedforsecurity=False",
+        "owasp": "A02:2021 Cryptographic Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "bandit:B311:crypto_utils.py:make_reset_token",
+      "finding": {
+        "cwe": "CWE-330",
+        "file_path": "crypto_utils.py",
+        "code": "def make_reset_token():\n    return \"%06d\" % random.randint(0, 999999)",
+        "window_start": 16,
+        "window_end": 18,
+        "window_kind": "function",
+        "symbol": "make_reset_token",
+        "sources": [],
+        "sinks": [
+          "random.randint"
+        ],
+        "targets": [],
+        "constants": [],
+        "tool": "bandit",
+        "rule_id": "B311",
+        "severity": "LOW",
+        "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+        "owasp": "A02:2021 Cryptographic Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "gitleaks:stripe-access-token:config.py:API_TOKEN",
+      "finding": {
+        "cwe": "CWE-798",
+        "file_path": "config.py",
+        "code": "API_TOKEN = \"<REDACTED>\"",
+        "window_start": 10,
+        "window_end": 10,
+        "window_kind": "statement",
+        "symbol": "API_TOKEN",
+        "sources": [],
+        "sinks": [],
+        "targets": [
+          "API_TOKEN"
+        ],
+        "constants": [],
+        "tool": "gitleaks",
+        "rule_id": "stripe-access-token",
+        "severity": "HIGH",
+        "message": "Found a Stripe Access Token, posing a risk to payment processing services and sensitive financial data.",
+        "owasp": "A07:2021 Identification and Authentication Failures",
+        "package": null,
+        "package_version": null,
+        "vulns": [],
+        "fixed_version": null
+      }
+    },
+    {
+      "id": "pip-audit:PYSEC-2020-96:requirements.txt:pyyaml",
+      "finding": {
+        "cwe": "CWE-1395",
+        "file_path": "requirements.txt",
+        "code": "PyYAML==5.3",
+        "window_start": 6,
+        "window_end": 6,
+        "window_kind": "dependency",
+        "symbol": "pyyaml",
+        "sources": [],
+        "sinks": [],
+        "targets": [],
+        "constants": [],
+        "tool": "pip-audit",
+        "rule_id": "PYSEC-2020-96",
+        "severity": "HIGH",
+        "message": "pyyaml 5.3 has a known vulnerability (CVE-2020-1747, CVE-2025-50460); fixed in 5.3.1",
+        "owasp": "A06:2021 Vulnerable and Outdated Components",
+        "package": "pyyaml",
+        "package_version": "5.3",
+        "vulns": [
+          "CVE-2020-1747",
+          "CVE-2025-50460",
+          "CVE-2020-14343"
+        ],
+        "fixed_version": "5.4"
+      }
+    },
+    {
+      "id": "pip-audit:PYSEC-2021-142:requirements.txt:pyyaml",
+      "finding": {
+        "cwe": "CWE-1395",
+        "file_path": "requirements.txt",
+        "code": "PyYAML==5.3",
+        "window_start": 6,
+        "window_end": 6,
+        "window_kind": "dependency",
+        "symbol": "pyyaml",
+        "sources": [],
+        "sinks": [],
+        "targets": [],
+        "constants": [],
+        "tool": "pip-audit",
+        "rule_id": "PYSEC-2021-142",
+        "severity": "HIGH",
+        "message": "pyyaml 5.3 has a known vulnerability (CVE-2020-14343); fixed in 5.4",
+        "owasp": "A06:2021 Vulnerable and Outdated Components",
+        "package": "pyyaml",
+        "package_version": "5.3",
+        "vulns": [
+          "CVE-2020-14343",
+          "CVE-2020-1747",
+          "CVE-2025-50460"
+        ],
+        "fixed_version": "5.4"
+      }
+    }
+  ]
+}

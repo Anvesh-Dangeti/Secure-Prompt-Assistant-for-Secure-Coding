@@ -8,7 +8,7 @@ Secure Software Engineering · IIT Hyderabad · July–November 2026 · **TEAM-3
 Anvesh Dangeti (EM26MTECH14009) · Dhananjay Kumar (CS26MTECH13007) · Muday Saiprakash Nayak (EM26MTECH11001)
 · [Individual contributions](CONTRIBUTIONS.md)
 
-The prompt linter is also published on its own:
+The prompt linter and the prompt templates are also published on their own:
 **[github.com/Anvesh-Dangeti/secure-prompt-lint](https://github.com/Anvesh-Dangeti/secure-prompt-lint)**.
 
 ---
@@ -54,7 +54,7 @@ All numbers are in `evaluation/recorded_results.py` and asserted by tests. The d
 | Strategy pilot (90 lab fixes, local 7B model) | 59 verified; CWE-specific guidance led; recursive review cost ~5× the tokens and broke behaviour more often |
 | **Token ladder** (the minimal prompt, live) | **9/10 verified at ~380 tokens per attempt**, against 8/10 at ~2,220 for the full three-message prompt |
 | Fixes to functions that other code calls | 13 verified, **0 broke the caller**; 7 behaviour breaks the scanners missed, caught by the tests |
-| Tool's own security | self-scan: 3 LOW advisories in the subprocess wrapper only; pip-audit of all 35 packages: **0 vulnerabilities**; **912 tests** |
+| Tool's own security | self-scan: 3 LOW advisories in the subprocess wrapper only; pip-audit of all 35 packages: **0 vulnerabilities**; **928 tests** |
 
 ## The panel's questions (mid-semester review)
 
@@ -62,7 +62,7 @@ All numbers are in `evaluation/recorded_results.py` and asserted by tests. The d
 |---|---|---|
 | How low can token usage go? | The review turns are where tokens go. The minimal prompt (S7m) keeps every linted constituent, costs ~380 tokens per fix attempt, and verified as many fixes as any strategy — the most efficient measured. The floor is the code itself (median 54 tokens). | [`docs/evaluation.md` §6](docs/evaluation.md) |
 | Does fixing one function break the functions around it, or larger workflows? | Four layers protect them: the prompt's scope constraint; a whole-repository rescan (check 2); a structural check that keeps parameters, decorators and parsing intact (check 3a); and behaviour tests on a patched copy (check 3b, lab mode). We also state the limits. | [`docs/related_functions.md`](docs/related_functions.md) |
-| What can others use to continue the research? | **secure-prompt-lint**: the linter as a dependency-free library and command line, with its rules, fix-its, an extension API and the 288-mutant benchmark, plus a list of open problems. | [`libs/secure-prompt-lint`](libs/secure-prompt-lint) · [public repo](https://github.com/Anvesh-Dangeti/secure-prompt-lint) |
+| What can others use to continue the research? | **secure-prompt-lint**: the linter as a dependency-free library and command line, with its rules, fix-its, an extension API and the 288-mutant benchmark; since 1.1 also **the prompt templates** (all nine ways of asking plus S7a and S7m, byte-identical to the prompts we measured), the 24 real findings behind them and a command that reproduces the token ladder; plus a list of open problems. | [`libs/secure-prompt-lint`](libs/secure-prompt-lint) · [public repo](https://github.com/Anvesh-Dangeti/secure-prompt-lint) |
 
 ---
 
@@ -215,7 +215,7 @@ The tool scans untrusted code, so it is itself an attack surface. The full model
 | [`docs/deployment.md`](docs/deployment.md) | Using a shared server: the `spa` connector, per-project tokens, what leaves the laptop, server setup, limits |
 | [`docs/evaluation.md`](docs/evaluation.md) | Detection, lifecycle, verification, E1 (linter), E2 (strategies), E5 (token ladder), threats to validity |
 | [`docs/related_functions.md`](docs/related_functions.md) | Whether a fix breaks the code around it: the four layers, the evidence, the limits |
-| [`libs/secure-prompt-lint`](libs/secure-prompt-lint) | The published linter: README, rules, extension API, benchmark, `RESEARCH.md` |
+| [`libs/secure-prompt-lint`](libs/secure-prompt-lint) | The published linter and prompt templates: README, rules, extension API, benchmark, the eleven strategies, `RESEARCH.md` |
 | [`docs/literature_review.md`](docs/literature_review.md) | The three assigned papers, supporting works, five research gaps |
 | [`docs/related_tools.md`](docs/related_tools.md) | Competitive landscape and capability matrix |
 | [`docs/scope_decisions.md`](docs/scope_decisions.md), [`docs/revised_direction.md`](docs/revised_direction.md) | Language and CWE scope with evidence; the changes made after Review 1 |

@@ -122,6 +122,7 @@ def test_related_functions_numbers(prs) -> None:  # noqa: ANN001
 def test_library_slides(prs) -> None:  # noqa: ANN001
     library, rerun = _text(prs.slides[10]), _text(prs.slides[11])
     assert deck.LIBRARY_URL in library and "MIT" in library
+    assert "Prompt templates" in library and "9 ways of asking" in library
     c, u = E1["constituent"], E1["unchecked"]
     assert f"{c['flagged']} / {c['mutants']}" in rerun and f"{u['flagged']} / {u['mutants']}" in rerun
     assert f"{c['mutants'] + u['mutants'] + E1['controls_clean']} edited prompts" in rerun
