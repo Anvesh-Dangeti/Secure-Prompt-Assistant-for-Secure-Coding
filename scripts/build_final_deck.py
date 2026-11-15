@@ -797,22 +797,25 @@ def slide_demo(prs, n):
     text(s, MX, 3.35, 5.45, 0.35, f"helpdesk-portal is our test app with {FIXTURE['seeded']} planted bugs, under a "
                                   "realistic name.", size=12, color=GREY)
     picture(s, "midsem_overview.png", MX, 3.78, 5.45, crop=(0.04, 0.0, 0.08, 0.35))
-    for i, (title, body) in enumerate((
-        ("Scan", f"4 scanners find {FIXTURE['findings']} issues; a false alarm is marked, not deleted"),
-        ("Ask in three sizes", "full, one message, minimal: all pass the checker"),
-        ("Shorten it", "the checker says FAIL; one click puts the parts back"),
-        ("The checker on its own", "the open library, in a terminal"),
-        ("Fake fix, then real fix", "scanners quiet but REJECTED; then VERIFIED"),
-        ("A fix that adds a risk elsewhere", "REJECTED; later the bug comes back after a merge"))):
+    for i, (title, part, body) in enumerate((
+        ("Scan", "part 1", f"4 scanners find {FIXTURE['findings']} issues; a false alarm is marked, not deleted"),
+        ("Shorten it", "part 1", "the checker says FAIL; one click puts the parts back"),
+        ("Fake fix, then real fix", "part 1", "scanners quiet but REJECTED; then VERIFIED"),
+        ("Ask in three sizes", "part 2", "full, one message, minimal: all pass the checker"),
+        ("The checker on its own", "part 2", "the open library, in a terminal"),
+        ("A fix that adds a risk elsewhere", "part 2", "REJECTED; later the bug comes back after a merge"))):
         y = 1.95 + i * 0.7
-        circle(s, 6.4, y + 0.05, 0.48, str(i + 1), fill=GREEN, size=14, font=HEAD)
-        text(s, 7.05, y, 5.68, 0.34, title, size=15, bold=True)
+        circle(s, 6.4, y + 0.05, 0.48, str(i + 1), fill=GREEN if part == "part 2" else INK, size=14, font=HEAD)
+        text(s, 7.05, y, 5.68, 0.34, [[(title, {}), (f"   {part}", {"bold": False, "color": GREY, "size": 12})]],
+             size=15, bold=True)
         text(s, 7.05, y + 0.32, 5.68, 0.34, body, size=13, color=GREY)
-    callout(s, 6.25, "Recorded video, about 8½ minutes. Every number in it was measured twice and can be "
-                     "reproduced.", h=0.62, size=14)
+    callout(s, 6.22, "Recorded video in two parts: the mid-semester walkthrough, then what is new since. About 8 "
+                     "minutes; every number in it was measured and can be reproduced.", h=0.75, size=14)
     page(s, n)
-    notes(s, """Play the video now. Rahul and helpdesk-portal are a story; the app is our seeded test application, and
-    the video caption says so. If the video fails, the backup slides in the appendix walk the same steps.""")
+    notes(s, """Play part 1, the walkthrough from the mid-semester review, then part 2, what we built since: three
+    prompt sizes, the checker on its own, a fix rejected for what else it added, and a regression. Rahul and
+    helpdesk-portal are a story; the app is our seeded test application, and the video caption says so. If the video
+    fails, the backup slides in the appendix walk the same steps.""")
 
 
 # --------------------------------------------------------------------------- part 3 · wrap-up
